@@ -126,7 +126,7 @@
         </div>
       </div>
 
-      <div class="flex justify-end gap-2 pt-2 border-t border-line">
+      <div class="flex justify-between items-center gap-3 pt-2 border-t border-line">
         <router-link :class="buttonVariants({ variant: 'ghost' })" to="/containers">{{ t('common.cancel') }}</router-link>
         <Button
           v-if="!licenseActive"

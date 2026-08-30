@@ -266,7 +266,8 @@ export default {
     confirmPrune: 'Remove all unused images? (images referenced by containers will be kept)',
     pruneTitle: 'Clean images',
     pruneBtn: 'Clean',
-    toastPruned: 'Removed {count} images',
+    toastPruned: 'Removed {count} images, freed {space}',
+    toastPrunedNone: 'No unused images to clean',
   },
   networks: {
     count: '{count} networks',
@@ -450,6 +451,15 @@ export default {
     webBasePathPh: 'e.g. /dm123 (start with /)',
     noAuthSetting: 'Unauthenticated response',
     noAuthSettingDesc: 'Status code returned when accessing API without login',
+    noAuth200: 'Allow (no auth)',
+    noAuth400: 'Bad Request',
+    noAuth401: 'Unauthorized',
+    noAuth403: 'Forbidden',
+    noAuth404: 'Not Found',
+    noAuth408: 'Request Timeout',
+    noAuth416: 'Range Not Satisfiable',
+    noAuth444: 'Connection Closed (nginx)',
+    noAuth500: 'Server Error',
     webBasePath: 'Security entrance',
     webBasePathDesc: 'When set, the panel is accessible only via this entrance path (other paths are blocked)',
     sessionMaxAge: 'Session duration',
@@ -734,6 +744,11 @@ export default {
     catWeb: 'Web Services',
     catStorage2: 'Storage',
     catOpsMonitor: 'Monitoring',
+
+    /* Install param hints (backend GlobalParams hint) */
+    hint_containerName: 'Container name: letters, digits, underscores and hyphens only',
+    hint_cpuLimit: '0 means no CPU limit (cores)',
+    hint_memLimit: '0 means no memory limit (MB)',
 
 
 

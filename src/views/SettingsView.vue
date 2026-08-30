@@ -623,9 +623,9 @@
           <div class="rounded-xl border border-line p-4 mb-4">
             <div class="flex items-center gap-2 mb-1">
               <Icon name="link" size="14" class="text-brand" />
-              <span class="text-[12px] font-medium">{{ t('license.onlineTitle') }}</span>
+              <span class="text-[15px] font-medium">{{ t('license.onlineTitle') }}</span>
             </div>
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-[14px] text-muted">
               <span v-if="licOnline.sync_state" class="font-medium inline-flex items-center gap-1" :style="licSyncStyle">
                 <span class="inline-block w-1.5 h-1.5 rounded-full" :style="{ background: 'currentColor' }" />
                 {{ licSyncLabel }}
@@ -662,7 +662,7 @@
               </div>
               <div>
                 <div class="text-[11px] text-muted mb-0.5">{{ t('license.edition') }}</div>
-                <div class="text-[13px] text-text">{{ t('license.' + (licInfo.plan || licInfo.type || 'pro')) }}</div>
+                <div class="text-[13px] text-text">{{ licPlanLabel }}</div>
               </div>
               <div>
                 <div class="text-[11px] text-muted mb-0.5">{{ t('license.authorizedUser') }}</div>
@@ -761,7 +761,7 @@
                 <p v-else class="text-[11px] text-muted">{{ t('license.dropZoneHint') }}</p>
                 <input ref="licFileInput" type="file" class="hidden" accept=".lic,.key,.txt" @change="onLicFile" />
               </div>
-              <div class="flex justify-end gap-2 mt-5">
+              <div class="flex justify-between items-center gap-3 mt-5">
                 <Button variant="ghost" size="sm"  @click="licFormOpen = false; resetLicForm()">{{ t('common.cancel') }}</Button>
                 <Button variant="brand" size="sm" class="transition-all duration-200" :class="licFile ? 'opacity-100 shadow-lg shadow-brand/25 ring-1 ring-brand/50' : 'opacity-35 grayscale'"
                   :disabled="licBusy || !licFile"
@@ -1007,10 +1007,13 @@ const panelErr = ref('')
 const panelSaved = ref(false)
 
 // 未认证设置选项(仿 1Panel noAuthSetting)
-const NOAUTH_OPTIONS = ['200', '400', '401', '403', '404', '408', '416', '444', '500'].map((v) => ({
-  value: v,
-  label: `${v} - ${t('settings.noAuth' + v)}`,
-}))
+const NOAUTH_OPTIONS = ['200', '400', '401', '403', '404', '408', '416', '444', '500'].map((v) => {
+  // 状态码说明文案:key 缺失时只显示状态码,避免暴露 settings.noAuthxxx
+  const key = 'settings.noAuth' + v
+  const s = t(key)
+  const label = s === key ? '' : s
+  return { value: v, label: label ? `${v} - ${label}` : v }
+})
 // 服务器端已配置的密钥(脱敏后非空):输入框留空,避免把脱敏值回传覆盖真值
 const tgTokenConfigured = ref(false)
 const smtpPassConfigured = ref(false)
@@ -1347,6 +1350,14 @@ const licFile = ref(null)
 const licFileInput = ref(null)
 // 在线状态(V3):直接绑定 store 的 ref,/ws/license 实时推送自动更新(无需刷新页面)
 const licOnline = licenseOnline // { mode, state, sync_state, last_verify, grace_deadline, verify_state, last_event_id, state_version }
+
+// 版本计划文案(Pro/Community/Enterprise...):key 缺失时显示原文,避免暴露 license.xxx
+const licPlanLabel = computed(() => {
+  const plan = licInfo.value?.plan || licInfo.value?.type || 'pro'
+  const key = 'license.' + plan
+  const s = t(key)
+  return s === key ? plan : s
+})
 
 // V3 同步状态(sync_state)展示:online/offline/grace/grace_expired/server_recovered/revoked/blocked
 const licSyncStyle = computed(() => {

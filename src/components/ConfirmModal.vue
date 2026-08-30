@@ -18,6 +18,7 @@
         <AlertDialogAction
           size="sm"
           :variant="confirmState.danger ? 'destructive' : 'brand'"
+          @click.capture="onActionClick"
         >
           {{ confirmState.confirmText }}
         </AlertDialogAction>
@@ -36,8 +37,17 @@ import { confirmState, resolveConfirm } from '../confirm'
 const { t } = useI18n()
 const sizeClass = computed(() => ({ sm: 'sm:max-w-sm', lg: '', xl: 'sm:max-w-xl' }[confirmState.size] || 'sm:max-w-sm'))
 
+// 确认按钮:先置 resolved 标志再 resolve(true),防止 reka 关闭事件的
+// onOpenChange(false) 抢先把它 resolve 成 false
+// 确认按钮:必须用 click.capture(捕获阶段)抢先 resolve(true)——
+// reka 的关闭处理在冒泡阶段,会先触发 onOpenChange(false) 把 promise 解析成 false
+function onActionClick() {
+  confirmState._resolved = true
+  resolveConfirm(true)
+}
+
 // ESC / 点击遮罩 / 取消按钮 → reka 触发 update:open=false → 统一 resolve(false)
 function onOpenChange(v) {
-  if (!v) resolveConfirm(false)
+  if (!v && !confirmState._resolved) resolveConfirm(false)
 }
 </script>

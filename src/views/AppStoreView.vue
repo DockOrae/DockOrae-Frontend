@@ -100,7 +100,7 @@
               <span>{{ paramLabel(p) }}</span>
             </label>
             <Textarea v-else-if="p.type === 'textarea'" v-model="params[p.key]" rows="3" class="text-[12px]" spellcheck="false" />
-            <p v-if="p.hint" class="text-[11px] text-muted">{{ t('appStore.hint_' + p.hint) }}</p>
+            <p v-if="p.hint" class="text-[11px] text-muted">{{ hintText(p) }}</p>
           </div>
 
           <!-- 编辑 compose 文件(1Panel 同款) -->
@@ -230,6 +230,13 @@ const validParams = computed(() => {
 
 function paramLabel(p) {
   return (locale.value || '').startsWith('zh') ? p.label_zh || p.label_en : p.label_en || p.label_zh
+}
+
+// 参数提示文案:key 缺失时兜底显示 hint 原文,避免暴露 appStore.hint_xxx
+function hintText(p) {
+  const k = 'appStore.hint_' + p.hint
+  const s = t(k)
+  return s === k ? p.hint : s
 }
 
 function genRandom() {

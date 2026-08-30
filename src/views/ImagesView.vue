@@ -232,7 +232,9 @@ async function prune() {
   if (!ok) return
   try {
     const r = await api('/images/prune', { method: 'POST' })
-    toastOk(t('images.toastPruned', { count: (r.ImagesDeleted || []).length }))
+    const n = (r.ImagesDeleted || []).length
+    if (n > 0) toastOk(t('images.toastPruned', { count: n, space: fmt(r.SpaceReclaimed || 0) }))
+    else toastOk(t('images.toastPrunedNone'))
     load()
   } catch (e) {
     toastErr(e.message)

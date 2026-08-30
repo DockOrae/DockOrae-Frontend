@@ -266,7 +266,8 @@ export default {
     confirmPrune: '確定清理所有未使用的映像檔嗎？（被容器引用的映像檔不會刪除）',
     pruneTitle: '清理映像檔',
     pruneBtn: '清理',
-    toastPruned: '已清理 {count} 個映像檔',
+    toastPruned: '已清理 {count} 個映像檔,釋放 {space}',
+    toastPrunedNone: '沒有可清理的未使用映像檔',
   },
   networks: {
     count: '共 {count} 個網路',
@@ -473,6 +474,15 @@ export default {
     webBasePathPh: '例如: /dm123(以 / 开头)',
     noAuthSetting: '未认证设置',
     noAuthSettingDesc: '未登录访问接口时返回的响应状态码',
+    noAuth200: '放行(允許訪問)',
+    noAuth400: '請求錯誤',
+    noAuth401: '未登入',
+    noAuth403: '禁止存取',
+    noAuth404: '未找到',
+    noAuth408: '請求逾時',
+    noAuth416: '範圍錯誤',
+    noAuth444: '連線關閉(nginx)',
+    noAuth500: '伺服器錯誤',
     webBasePath: '安全入口',
     webBasePathDesc: '開啟後只能透過指定的安全入口路徑登入面板,其他路徑無法訪問',
     sessionMaxAge: '工作階段時長',
@@ -734,6 +744,11 @@ export default {
     catWeb: 'Web 服務',
     catStorage2: '儲存',
     catOpsMonitor: '維運監控',
+
+    /* 安裝參數提示(後端 GlobalParams hint) */
+    hint_containerName: '容器名稱僅支援字母、數字、底線、連字號',
+    hint_cpuLimit: '0 表示不限制 CPU 核心數',
+    hint_memLimit: '0 表示不限制記憶體,單位 MB',
 
 
 

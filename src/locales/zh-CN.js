@@ -267,7 +267,8 @@ export default {
     confirmPrune: '确定清理所有未使用的镜像吗?(被容器引用的镜像不会删除)',
     pruneTitle: '清理镜像',
     pruneBtn: '清理',
-    toastPruned: '已清理 {count} 个镜像',
+    toastPruned: '已清理 {count} 个镜像,释放 {space}',
+    toastPrunedNone: '没有可清理的未使用镜像',
   },
   networks: {
     count: '共 {count} 个网络',
@@ -451,6 +452,15 @@ export default {
     webBasePathPh: '例如: /dm123(以 / 开头)',
     noAuthSetting: '未认证设置',
     noAuthSettingDesc: '未登录访问接口时返回的响应状态码',
+    noAuth200: '放行(允许访问)',
+    noAuth400: '请求错误',
+    noAuth401: '未登录',
+    noAuth403: '禁止访问',
+    noAuth404: '未找到',
+    noAuth408: '请求超时',
+    noAuth416: '范围错误',
+    noAuth444: '连接关闭(nginx)',
+    noAuth500: '服务器错误',
     webBasePath: '安全入口',
     webBasePathDesc: '开启后只能通过指定的安全入口路径登录面板,其他路径无法访问',
     sessionMaxAge: '会话时长默认',
@@ -735,6 +745,11 @@ export default {
     catWeb: 'Web 服务',
     catStorage2: '存储',
     catOpsMonitor: '运维监控',
+
+    /* 安装参数提示(后端 GlobalParams hint) */
+    hint_containerName: '容器名称仅支持字母、数字、下划线、连字符',
+    hint_cpuLimit: '0 表示不限制 CPU 核心数',
+    hint_memLimit: '0 表示不限制内存,单位 MB',
 
 
 

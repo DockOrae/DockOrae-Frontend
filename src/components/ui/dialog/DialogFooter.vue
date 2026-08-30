@@ -17,7 +17,7 @@ const props = defineProps({
   <div
     data-slot="dialog-footer"
     :class="
-      cn('flex items-center justify-end gap-2 px-5 py-3.5 border-t border-line bg-surface/60 rounded-b-[0.9rem]', props.class)
+      cn('flex items-center justify-between gap-3 px-5 py-3.5 border-t border-line bg-surface/60 rounded-b-[0.9rem]', props.class)
     "
   >
     <slot />

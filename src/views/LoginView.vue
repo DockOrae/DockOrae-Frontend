@@ -328,11 +328,12 @@ async function doTotp() {
   gap: 10px;
 }
 
-/* 登录页工具栏按钮:放大(44px 圆 + 20px 图标)+ 背景醒目(背景图上清晰可见) */
+/* 登录页工具栏按钮:比主页面按钮(36px)大一号(40px),图标 18px;
+   保留半透明底/描边保证背景图上可见 */
 .login-toolbar :deep(button) {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
   padding: 0;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -348,8 +349,13 @@ async function doTotp() {
   transform: translateY(-1px);
 }
 .login-toolbar :deep(svg) {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+}
+/* 语言(translate)图标字形偏小(字母占位 14px vs 主题 17px),单独放大补偿,视觉等大 */
+.login-toolbar :deep(.locale-btn svg) {
+  width: 21px;
+  height: 21px;
 }
 
 /* ---------- 居中卡片 ---------- */

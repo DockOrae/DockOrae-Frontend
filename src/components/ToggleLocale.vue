@@ -45,10 +45,10 @@ function onPick(code) {
 </script>
 
 <style scoped>
-/* 语言切换按钮:比右侧 36px 圆钮略小(30px),图标同步缩小 */
+/* 语言切换按钮:与旁边主题(亮/暗)按钮同尺寸(36px) */
 .locale-btn {
-  width: 30px !important;
-  height: 30px !important;
-  min-width: 30px !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
 }
 </style>
