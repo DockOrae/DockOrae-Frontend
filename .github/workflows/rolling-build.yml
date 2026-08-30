@@ -1,0 +1,56 @@
+# DockOrae-Frontend 构建与发布
+# 参考 OpenListTeam/OpenList-Frontend 的 rolling 模式:
+#   每次 push master → 构建 dist → 更新 GitHub `rolling` release 资产
+#   (后端 DockOrae 构建时下载该资产嵌入二进制)
+name: Frontend Rolling Build
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install deps
+        run: npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Read version
+        id: ver
+        run: |
+          V=$(node -p "require('./package.json').version")
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - name: Package dist
+        run: tar -czf dockorae-frontend-dist.tar.gz -C dist .
+
+      # rolling release 常驻更新:删旧建新(资产名固定,后端下载地址不变)
+      - name: Delete old rolling release
+        run: gh release delete rolling --cleanup-tag --yes || true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish rolling release
+        run: |
+          gh release create rolling \
+            --title "Rolling ${{ steps.ver.outputs.version }}" \
+            --notes "滚动构建(开发版,后端嵌入用)" \
+            dockorae-frontend-dist.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
