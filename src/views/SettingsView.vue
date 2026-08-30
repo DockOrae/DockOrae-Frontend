@@ -1559,7 +1559,7 @@ onMounted(() => {
 }
 
 .card-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--dm-text);
   margin-bottom: 16px;
@@ -1633,7 +1633,7 @@ onMounted(() => {
   min-width: 0;
 }
 .sr-label {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--dm-text);
 }
@@ -1709,7 +1709,7 @@ onMounted(() => {
 }
 .ng-count {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--dm-muted);
   background: var(--dm-surface2);
@@ -1753,7 +1753,7 @@ onMounted(() => {
   border-radius: 999px;
   border: 1px solid var(--dm-line);
   background: var(--dm-surface2);
-  font-size: 12px;
+  font-size: 14px;
   color: var(--dm-muted);
   cursor: pointer;
   user-select: none;

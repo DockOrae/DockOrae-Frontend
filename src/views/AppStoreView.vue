@@ -399,11 +399,11 @@ onMounted(load)
   gap: 6px;
 }
 .app-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
 }
 .installed-tag {
-  font-size: 10px;
+  font-size: 12px;
   padding: 1px 8px;
   border-radius: 999px;
   white-space: nowrap;
@@ -412,7 +412,7 @@ onMounted(load)
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 .update-tag {
-  font-size: 10px;
+  font-size: 12px;
   padding: 1px 8px;
   border-radius: 999px;
   white-space: nowrap;
@@ -430,7 +430,7 @@ onMounted(load)
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--color-muted);
   line-height: 1.4;
   height: 2.8em;
@@ -443,7 +443,7 @@ onMounted(load)
   margin-top: 6px;
 }
 .cat-tag {
-  font-size: 10px;
+  font-size: 12px;
   padding: 1px 8px;
   border-radius: 999px;
   background: rgba(236, 72, 153, 0.1);

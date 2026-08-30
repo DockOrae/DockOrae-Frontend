@@ -806,7 +806,7 @@ onBeforeUnmount(() => {
   padding: 4px 12px;
   border: 1px solid var(--ov-line);
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--dm-text);
 }
 .ov-state-dot {
@@ -875,7 +875,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   background: transparent;
   color: var(--ov-label);
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -897,7 +897,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 14px;
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--dm-line);
@@ -928,7 +928,7 @@ onBeforeUnmount(() => {
 
 /* ---------- 通用 ---------- */
 .ov-kicker {
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ov-label);
@@ -1015,7 +1015,7 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 .count-card-sub {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ov-faint);
 }
 .ov-tile:hover {
@@ -1048,12 +1048,12 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 .ov-tile-unit {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--ov-label);
 }
 .ov-tile-detail {
   padding: 5px var(--ov-pad) 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ov-label);
 }
 .ov-tile-foot {
@@ -1061,7 +1061,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 8px;
   padding: 14px var(--ov-pad) 0;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ov-faint);
@@ -1112,11 +1112,11 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--ov-label);
 }
 .ov-legend-num {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--dm-text);
   font-variant-numeric: tabular-nums;
@@ -1228,7 +1228,7 @@ onBeforeUnmount(() => {
   margin-top: 8px;
 }
 .ov-strip-sub {
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-top: 8px;
@@ -1256,7 +1256,7 @@ onBeforeUnmount(() => {
 }
 .ov-ip {
   margin-top: 7px;
-  font-size: 13px;
+  font-size: 15px;
   overflow-wrap: anywhere;
   transition: filter 0.2s ease;
 }
@@ -1281,7 +1281,7 @@ onBeforeUnmount(() => {
   border: none;
   background: transparent;
   color: var(--dm-muted);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -1379,7 +1379,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   padding: 14px 18px;
   border-bottom: 1px solid var(--dm-line);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--dm-text);
 }

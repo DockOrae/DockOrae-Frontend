@@ -611,7 +611,7 @@ function logout() {
   align-items: center;
   gap: 12px;
   padding: 9px 20px;
-  font-size: 13px;
+  font-size: 15px;
   background: rgba(245, 158, 11, 0.14);
   border-bottom: 1px solid rgba(245, 158, 11, 0.3);
   color: #fbbf24;
@@ -638,7 +638,7 @@ function logout() {
   align-items: center;
   gap: 16px;
   padding: 10px 20px;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--dm-footer-color);
   background: var(--dm-surface);
   border-top: 1px solid var(--dm-line);

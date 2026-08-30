@@ -469,7 +469,7 @@ async function doTotp() {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #ef4444;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 /* ---------- 表单 ---------- */
@@ -477,7 +477,7 @@ async function doTotp() {
   display: block;
   color: var(--color-text);
   font-weight: 500;
-  font-size: 14px;
+  font-size: 16px;
   margin: 14px 0 6px;
 }
 .f-field {
@@ -494,13 +494,13 @@ async function doTotp() {
 }
 .f-input {
   width: 100%;
-  height: 46px;
+  height: 48px;
   padding: 0 40px 0 38px;
   border-radius: 10px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: var(--bg-card-solid);
   color: var(--color-text);
-  font-size: 15.5px;
+  font-size: 17px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -541,7 +541,7 @@ async function doTotp() {
   border-radius: 10px;
   background: linear-gradient(135deg, #ec4899, #d946ef);
   color: #fff;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -577,7 +577,7 @@ async function doTotp() {
   border: none;
   background: transparent;
   color: var(--color-text-subtle);
-  font-size: 12px;
+  font-size: 14px;
   cursor: pointer;
   text-align: center;
 }
@@ -586,13 +586,13 @@ async function doTotp() {
 }
 .f-hint {
   color: var(--color-text-subtle);
-  font-size: 12px;
+  font-size: 14px;
   margin: 0 0 6px;
 }
 
 .default-hint {
   text-align: center;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--color-text-subtle);
   margin-top: 16px;
 }
