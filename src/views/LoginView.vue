@@ -364,11 +364,11 @@ async function doTotp() {
 .login-card {
   position: relative;
   width: 100%;
-  max-width: 400px;
+  max-width: 460px;
   background: var(--bg-card);
   border: 1px solid var(--color-border);
-  border-radius: 20px;
-  padding: 40px 32px 28px;
+  border-radius: 22px;
+  padding: 48px 40px 32px;
   box-shadow: var(--shadow-card);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
@@ -415,11 +415,12 @@ async function doTotp() {
   object-fit: contain;
 }
 .brand-name {
-  /* 品牌名用 Wedding 英文艺术字(中文 fallback 元气泡泡) */
-  font-family: var(--font-brand);
-  font-size: 34px;
-  font-weight: 400;
-  letter-spacing: 2px;
+  /* 品牌名:英文用系统字体(Inter),中文自动走元气泡泡;字号加大 */
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  line-height: 1.35;
+  padding: 4px 0 2px;
   background: linear-gradient(135deg, var(--color-accent), #ec4899);
   -webkit-background-clip: text;
   background-clip: text;
@@ -493,13 +494,13 @@ async function doTotp() {
 }
 .f-input {
   width: 100%;
-  height: 42px;
+  height: 46px;
   padding: 0 40px 0 38px;
   border-radius: 10px;
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: var(--bg-card-solid);
   color: var(--color-text);
-  font-size: 14px;
+  font-size: 15.5px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }

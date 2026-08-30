@@ -1,4 +1,4 @@
-// 校验 i18n key 完整性:源码用到的 key 必须存在于 5 个语言包
+// 校验 i18n key 完整性:源码用到的 key 必须存在于 3 个语言包(zh-CN/zh-TW/en)
 const fs = require('fs')
 const path = require('path')
 const SRC = path.join(__dirname, 'src')

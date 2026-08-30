@@ -4,7 +4,7 @@ DockOrae 面板的**前端仓库**(独立维护,与后端 `DockOrae/DockOrae` �
 
 ## 技术栈
 
-- Vue 3 + Vite + vue-i18n(14 语言)
+- Vue 3 + Vite + vue-i18n(简体中文 / 繁體中文 / English)
 - Tailwind CSS + shadcn-vue 组件
 - lucide 图标
 
@@ -14,7 +14,7 @@ DockOrae 面板的**前端仓库**(独立维护,与后端 `DockOrae/DockOrae` �
 npm install
 npm run dev        # vite :5173,API 代理到 :8080(需本地后端已启动)
 npm run build      # 产物 dist/(go:embed 嵌入后端用)
-npm run check-i18n # 校验 14 语言 key 一致性
+npm run check-i18n # 校验 3 语言 key 一致性
 ```
 
 ## 与后端集成

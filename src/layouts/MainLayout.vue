@@ -342,11 +342,12 @@ function logout() {
   flex-shrink: 0;
 }
 .brand-name {
-  /* DockOrae 品牌名:Wedding 英文艺术字(中文 fallback 元气泡泡) */
-  font-family: var(--font-brand);
-  font-size: 20px;
-  font-weight: 400;
-  letter-spacing: 1px;
+  /* 品牌名:英文用系统字体(Inter),中文自动走元气泡泡;字号加大、下沉一点 */
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+  padding-top: 3px;
   background: linear-gradient(135deg, var(--color-accent), #ec4899);
   -webkit-background-clip: text;
   background-clip: text;
