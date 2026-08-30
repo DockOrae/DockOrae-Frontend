@@ -1,6 +1,6 @@
 export default {
   app: {
-    name: 'Docker Manager',
+    name: 'DockOrae',
     github: 'GitHub',
     version: 'v1.0.0',
     docs: '文件',
@@ -557,7 +557,7 @@ export default {
     smtpFromDesc: '電子郵件將從此位址寄出',
     smtpFromName: '寄件人名稱',
     smtpFromNameDesc: 'From 標頭中顯示於位址前的選用顯示名稱',
-    smtpFromNamePh: '例如 Docker Manager',
+    smtpFromNamePh: '例如 DockOrae',
     smtpTo: '收件人',
     smtpToDesc: '以逗號分隔的收件人電子郵件位址',
     smtpToPh: '例如 a{at}example.com, b{at}example.com',

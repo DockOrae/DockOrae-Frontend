@@ -13,7 +13,7 @@
       <div class="login-card">
         <div class="brand">
           <img src="/logo.svg" alt="logo" class="brand-logo" />
-          <span class="brand-name">Docker Manager</span>
+          <span class="brand-name">{{ t('app.name') }}</span>
           <span class="brand-accent" aria-hidden="true" />
         </div>
         <h2 class="welcome">
@@ -415,9 +415,11 @@ async function doTotp() {
   object-fit: contain;
 }
 .brand-name {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
+  /* 品牌名用 Wedding 英文艺术字(中文 fallback 元气泡泡) */
+  font-family: var(--font-brand);
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: 2px;
   background: linear-gradient(135deg, var(--color-accent), #ec4899);
   -webkit-background-clip: text;
   background-clip: text;
@@ -434,6 +436,8 @@ async function doTotp() {
 .welcome {
   text-align: center;
   color: var(--color-text);
+  /* 中文标题用元气泡泡艺术字(英文 fallback 系统字体) */
+  font-family: var(--font-cn);
   font-size: 22px;
   font-weight: 600;
   line-height: 1.2;

@@ -1,6 +1,6 @@
 export default {
   app: {
-    name: 'Docker Manager',
+    name: 'DockOrae',
     github: 'GitHub',
     version: 'v1.0.0',
     docs: 'Docs',
@@ -534,7 +534,7 @@ export default {
     smtpFromDesc: 'Emails are sent from this address',
     smtpFromName: 'Sender name',
     smtpFromNameDesc: 'Optional display name shown before the address in the From header',
-    smtpFromNamePh: 'e.g. Docker Manager',
+    smtpFromNamePh: 'e.g. DockOrae',
     smtpTo: 'Recipients',
     smtpToDesc: 'Comma-separated recipient email addresses',
     smtpToPh: 'e.g. a{at}example.com, b{at}example.com',

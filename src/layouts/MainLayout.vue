@@ -7,10 +7,11 @@
       @mouseenter="onEnter"
       @mouseleave="onLeave"
     >
-      <!-- 品牌区(只留 logo 图标) -->
+      <!-- 品牌区:logo 图标 + DockOrae 名字 -->
       <div class="sider-brand">
         <div class="brand-block" @click="$router.push('/')">
           <img src="/logo.svg" alt="logo" class="brand-logo" />
+          <span v-if="expanded || pinned" class="brand-name">{{ t('app.name') }}</span>
         </div>
         <div v-if="expanded || pinned" class="brand-actions">
           <button
@@ -338,6 +339,22 @@ function logout() {
   width: 30px;
   height: 30px;
   object-fit: contain;
+  flex-shrink: 0;
+}
+.brand-name {
+  /* DockOrae 品牌名:Wedding 英文艺术字(中文 fallback 元气泡泡) */
+  font-family: var(--font-brand);
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--color-accent), #ec4899);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   flex-shrink: 0;
 }
 /* 图钉按钮悬浮右侧,不挤占 logo 居中位置 */
