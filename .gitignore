@@ -4,3 +4,4 @@ shots/
 src-backup-*/
 *.local
 .DS_Store
+scripts/
