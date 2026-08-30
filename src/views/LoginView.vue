@@ -416,7 +416,7 @@ async function doTotp() {
 }
 .brand-name {
   /* 品牌名:英文用系统字体(Inter),中文自动走元气泡泡;字号加大 */
-  font-size: 40px;
+  font-size: 32px;
   font-weight: 700;
   letter-spacing: 1.5px;
   line-height: 1.35;

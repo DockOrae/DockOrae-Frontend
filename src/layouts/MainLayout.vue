@@ -343,7 +343,7 @@ function logout() {
 }
 .brand-name {
   /* 品牌名:英文用系统字体(Inter),中文自动走元气泡泡;字号加大、下沉一点 */
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 700;
   letter-spacing: 0.5px;
   line-height: 1.2;
@@ -397,12 +397,13 @@ function logout() {
 .nav-item {
   display: flex;
   align-items: center;
+  justify-content: center; /* 菜单项内容居中(展开/收起一致) */
   gap: 10px;
-  height: 40px;
+  height: 44px;
   margin: 4px 0;
   padding: 0 12px;
   border-radius: 8px;
-  font-size: 13.5px;
+  font-size: 17px;
   font-weight: 500;
   color: var(--dm-muted);
   text-decoration: none;
