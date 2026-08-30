@@ -35,10 +35,13 @@ jobs:
         id: ver
         run: |
           V=$(node -p "require('./package.json').version")
+          SHA=$(git rev-parse --short HEAD)
           echo "version=$V" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
 
+      # 资产命名参考 OpenList-Frontend:dist-v<version>-<sha>.tar.gz(后端按该模式匹配)
       - name: Package dist
-        run: tar -czf dockorae-frontend-dist.tar.gz -C dist .
+        run: tar -czf dockorae-frontend-dist-v${{ steps.ver.outputs.version }}-${{ steps.ver.outputs.sha }}.tar.gz -C dist .
 
       # rolling release 常驻更新:删旧建新(资产名固定,后端下载地址不变)
       - name: Delete old rolling release
@@ -51,6 +54,6 @@ jobs:
           gh release create rolling \
             --title "Rolling ${{ steps.ver.outputs.version }}" \
             --notes "滚动构建(开发版,后端嵌入用)" \
-            dockorae-frontend-dist.tar.gz
+            dockorae-frontend-dist-v${{ steps.ver.outputs.version }}-${{ steps.ver.outputs.sha }}.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
