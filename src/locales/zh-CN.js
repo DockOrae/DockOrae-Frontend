@@ -712,6 +712,30 @@ export default {
     installed: '已安装',
     count: '共 {count} 个应用',
 
+    /* 应用商店分类(数据来自 DockOrae/DockOrae-Apps data.yml 顶层 tags,前端映射翻译) */
+    catTools: '实用工具',
+    catAI: 'AI',
+    catDatabase: '数据库',
+    catDevOps: 'DevOps',
+    catDevTools: '开发工具',
+    catWebsite: '建站',
+    catMiddleware: '中间件',
+    catSecurity: '安全',
+    catMedia: '多媒体',
+    catRuntime: '运行环境',
+    catStorage: '云存储',
+    catGames: '休闲游戏',
+    catWebServer: 'Web 服务器',
+    catEmail: '邮件服务',
+    catCRM: 'CRM',
+    catTool: '工具',
+    catBI: 'BI',
+    catMonitoring: '监控',
+    catPanelTools: '面板工具',
+    catWeb: 'Web 服务',
+    catStorage2: '存储',
+    catOpsMonitor: '运维监控',
+
 
 
     empty: '没有符合条件的应用',

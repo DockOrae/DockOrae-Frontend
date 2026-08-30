@@ -711,6 +711,30 @@ export default {
     installed: 'Installed',
     count: '{count} apps',
 
+    /* App Store categories (data from DockOrae/DockOrae-Apps data.yml top-level tags) */
+    catTools: 'Tools',
+    catAI: 'AI',
+    catDatabase: 'Database',
+    catDevOps: 'DevOps',
+    catDevTools: 'Dev Tools',
+    catWebsite: 'Website',
+    catMiddleware: 'Middleware',
+    catSecurity: 'Security',
+    catMedia: 'Media',
+    catRuntime: 'Runtime',
+    catStorage: 'Storage',
+    catGames: 'Games',
+    catWebServer: 'Web Server',
+    catEmail: 'Email',
+    catCRM: 'CRM',
+    catTool: 'Tools',
+    catBI: 'BI',
+    catMonitoring: 'Monitoring',
+    catPanelTools: 'Panel Tools',
+    catWeb: 'Web Services',
+    catStorage2: 'Storage',
+    catOpsMonitor: 'Monitoring',
+
 
 
     empty: 'No matching apps',

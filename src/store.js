@@ -163,7 +163,7 @@ export function displayName() {
 
 /** 头像 URL:<img> 无法带 Authorization 头,复用 WS 的 ?token= 认证方式;未设置时默认使用 bg.jpg */
 export function avatarUrl() {
-  if (!user.avatar) return '/bg.jpg'
+  if (!user.avatar) return '/images/bg.jpg'
   const t = getToken()
   return `/api/avatar/${user.avatar}?token=${encodeURIComponent(t || '')}`
 }

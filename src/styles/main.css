@@ -1,20 +1,36 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* ---------- 品牌艺术字字体 ---------- */
-/* 英文字体(BlueCustard 艺术字) */
+/* =====================================================================
+   品牌艺术字体体系(DockOrae Art Type System)
+   ---------------------------------------------------------------------
+   策略(已按两个字体的实际字符覆盖与字形度量验证):
+   - 英文 / 数字 → BlueCustard(艺术手写体:26 字母 + 数字 + 常用标点;
+     大写高 ~0.78em、数字高 ~0.77em,与汉字视觉高度接近)
+   - 中文       → YuanQI(元气圆体,7247 字,覆盖常用汉字 + 全角标点)
+   - BlueCustard 缺失字形(% # @ & [ ] { } < > \ | ^ ~ — · 等)自动落回
+     YuanQI —— 保证任何可见字符都有"艺术字体"来源,绝不退回系统字体
+   - 中英文同一字号下视觉高度一致,不按语言分别设字号;
+     字号由组件语义决定(Tailwind text-* / --fs-* Token)
+   ===================================================================== */
+/* 英文字体(BlueCustard 艺术字):WOFF2 优先,OTF 兜底。
+   size-adjust: 82% —— 光学缩小英文/数字(用户两轮反馈英文偏大),
+   大写高 0.78em×0.82≈0.64em,与 YuanQI 汉字视觉高度匹配 */
 @font-face {
   font-family: "BlueCustard";
-  src: url("/fonts/BlueCustard.otf") format("opentype");
+  src: url("/fonts/BlueCustard.woff2") format("woff2"),
+    url("/fonts/BlueCustard.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
+  size-adjust: 82%;
 }
 
-/* 中文字体(元气,YuanQI) */
+/* 中文字体(元气,YuanQI):WOFF2 优先,OTF 兜底 */
 @font-face {
   font-family: "YuanQI";
-  src: url("/fonts/YuanQI.otf") format("opentype");
+  src: url("/fonts/YuanQI.woff2") format("woff2"),
+    url("/fonts/YuanQI.otf") format("opentype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -119,11 +135,15 @@
   --color-warn: #fbbf24;
   --color-danger: #f87171;
   --color-info: #60a5fa;
-  --font-sans: "BlueCustard", "YuanQI", "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  /* 统一艺术字体栈(唯一真源):英文/数字 BlueCustard → 中文 YuanQI → 系统兜底。
+     全应用所有用户可见文字(页面/Sidebar/Button/Input/Table/Dialog/Toast/
+     Badge/数字/动态 Docker 数据)均由此继承,禁止局部覆盖为系统字体。 */
+  --font-art: "BlueCustard", "YuanQI", "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-sans: var(--font-art);
+  --font-brand: var(--font-art);
+  --font-cn: var(--font-art);
+  /* 终端/日志/代码面板专用等宽字体(不属于品牌艺术字体系) */
   --font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, "Courier New", monospace;
-  /* 品牌字体:英文 BlueCustard,中文元气 */
-  --font-brand: "BlueCustard", "YuanQI", var(--font-sans);
-  --font-cn: "YuanQI", "PingFang SC", "Microsoft YaHei", sans-serif;
   /* 全局字号放大(Tailwind 文本尺寸统一上调,中文更清晰) */
   --text-xs: 0.8125rem;
   --text-xs--line-height: 1.4;
@@ -164,18 +184,55 @@
   --color-popover-foreground: var(--popover-foreground);
 }
 
+/* ---------- 有限字号体系 ----------
+   Tailwind text-* 缩放(rem,@theme 已定义):text-xs 15.4 / sm 19 / base 20.2 /
+   lg 22.6 / xl 24.9 / 2xl 28.5 px(html 根字号 19px)
+   组件 scoped 样式统一引用下方 px Token,禁止再散落裸 font-size */
+:root {
+  --fs-2xs: 11.5px; /* 次级说明文字 */
+  --fs-xs: 12px; /* 表格时间戳 / 端口 / caption */
+  --fs-xs2: 12.5px; /* 子菜单 / 小徽标 */
+  --fs-sm: 13px; /* 次要正文 */
+  --fs-sm2: 13.5px; /* 设置页 tab / 登出按钮 */
+  --fs-md: 14px; /* 小正文 / 统计副行 */
+  --fs-md2: 15px; /* 正文 / 页标题 / 导航 */
+  --fs-lg: 16px; /* 卡片标题 / 输入框 */
+  --fs-lg2: 17px; /* 大正文 / 侧栏菜单 */
+  --fs-xl: 18px; /* 次级大标题 */
+  --fs-xl2: 19px; /* 品牌字 */
+  --fs-2xl: 22px; /* 登录欢迎标题 */
+  --fs-3xl: 28px; /* 应用商店图标区 */
+  --fs-4xl: 32px; /* 登录品牌名 */
+  --fs-5xl: 34px; /* 仪表盘大数字 */
+  --fs-hero: 48px; /* 仪表盘主数字 */
+}
+
 html,
 body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-sans);
+  font-family: var(--font-art);
   font-size: 19px;
+  /* 显式行高(而非依赖字体度量 normal):YuanQI win 度量 1.40em,
+     BlueCustard ~1.0em,统一 1.5 保证中英文混排行高一致不溢出 */
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* 浏览器表单控件默认不继承字体(select/option 在 Windows 上尤其顽固),
+   统一显式继承艺术字体,防止 Dialog/Select/Input 偷偷恢复系统字体 */
+button,
+input,
+textarea,
+select,
+option,
+optgroup {
+  font-family: inherit;
 }
 
 /* ---------- 组件基类 ---------- */

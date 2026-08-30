@@ -1,4 +1,6 @@
 node_modules/
 dist/
+shots/
+src-backup-*/
 *.local
 .DS_Store

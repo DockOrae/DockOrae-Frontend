@@ -806,7 +806,7 @@ onBeforeUnmount(() => {
   padding: 4px 12px;
   border: 1px solid var(--ov-line);
   border-radius: 999px;
-  font-size: 15px;
+  font-size: var(--fs-md2);
   color: var(--dm-text);
 }
 .ov-state-dot {
@@ -875,7 +875,7 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   background: transparent;
   color: var(--ov-label);
-  font-size: 15px;
+  font-size: var(--fs-md2);
   cursor: pointer;
   transition: all 0.15s;
 }
@@ -897,7 +897,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
+  font-size: var(--fs-md);
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--dm-line);
@@ -911,7 +911,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
+  font-size: var(--fs-xs2);
 }
 .ov-health-mark {
   width: 14px;
@@ -928,7 +928,7 @@ onBeforeUnmount(() => {
 
 /* ---------- 通用 ---------- */
 .ov-kicker {
-  font-size: 13px;
+  font-size: var(--fs-md2);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ov-label);
@@ -939,7 +939,7 @@ onBeforeUnmount(() => {
   gap: 7px;
 }
 .ov-sub {
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   margin-top: 4px;
   color: var(--ov-faint);
 }
@@ -1007,7 +1007,7 @@ onBeforeUnmount(() => {
   transform: scale(1.06);
 }
 .count-card-num {
-  font-size: 48px;
+  font-size: var(--fs-hero);
   font-weight: 700;
   line-height: 1.05;
   letter-spacing: -0.02em;
@@ -1015,7 +1015,7 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 .count-card-sub {
-  font-size: 14px;
+  font-size: var(--fs-md2);
   color: var(--ov-faint);
 }
 .ov-tile:hover {
@@ -1031,7 +1031,7 @@ onBeforeUnmount(() => {
 }
 .ov-tile-icon {
   display: inline-flex;
-  font-size: 15px;
+  font-size: var(--fs-md2);
 }
 .ov-tile-value {
   display: flex;
@@ -1040,7 +1040,7 @@ onBeforeUnmount(() => {
   padding: 12px var(--ov-pad) 0;
 }
 .ov-tile-number {
-  font-size: 34px;
+  font-size: var(--fs-5xl);
   font-weight: 600;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -1048,12 +1048,12 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 .ov-tile-unit {
-  font-size: 16px;
+  font-size: var(--fs-lg);
   color: var(--ov-label);
 }
 .ov-tile-detail {
   padding: 5px var(--ov-pad) 0;
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--ov-label);
 }
 .ov-tile-foot {
@@ -1061,7 +1061,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 8px;
   padding: 14px var(--ov-pad) 0;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ov-faint);
@@ -1112,11 +1112,11 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--ov-label);
 }
 .ov-legend-num {
-  font-size: 15px;
+  font-size: var(--fs-md2);
   font-weight: 600;
   color: var(--dm-text);
   font-variant-numeric: tabular-nums;
@@ -1162,7 +1162,7 @@ onBeforeUnmount(() => {
   background: var(--ov-line);
 }
 .ov-foot-value {
-  font-size: 18px;
+  font-size: var(--fs-xl);
   font-weight: 600;
   margin-top: 4px;
   color: var(--dm-text);
@@ -1205,17 +1205,17 @@ onBeforeUnmount(() => {
   }
 }
 .ov-strip-value {
-  font-size: 19px;
+  font-size: var(--fs-xl2);
   font-weight: 600;
   margin-top: 6px;
   color: var(--dm-text);
   font-variant-numeric: tabular-nums;
 }
 .ov-strip-value.sm {
-  font-size: 15px;
+  font-size: var(--fs-md2);
 }
 .ov-strip-value.time-v {
-  font-size: 15px;
+  font-size: var(--fs-md2);
 }
 .ov-strip-split {
   display: flex;
@@ -1228,7 +1228,7 @@ onBeforeUnmount(() => {
   margin-top: 8px;
 }
 .ov-strip-sub {
-  font-size: 12px;
+  font-size: var(--fs-md);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-top: 8px;
@@ -1256,7 +1256,7 @@ onBeforeUnmount(() => {
 }
 .ov-ip {
   margin-top: 7px;
-  font-size: 15px;
+  font-size: var(--fs-md2);
   overflow-wrap: anywhere;
   transition: filter 0.2s ease;
 }
@@ -1281,7 +1281,7 @@ onBeforeUnmount(() => {
   border: none;
   background: transparent;
   color: var(--dm-muted);
-  font-size: 15px;
+  font-size: var(--fs-md2);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -1314,7 +1314,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: var(--fs-xs2);
   color: var(--dm-muted);
   cursor: pointer;
   user-select: none;
@@ -1340,12 +1340,12 @@ onBeforeUnmount(() => {
   min-width: 0;
 }
 .backup-title {
-  font-size: 13.5px;
+  font-size: var(--fs-sm2);
   font-weight: 600;
   color: var(--dm-text);
 }
 .backup-description {
-  font-size: 11.5px;
+  font-size: var(--fs-2xs);
   color: var(--dm-muted);
   margin-top: 3px;
   line-height: 1.45;
@@ -1379,7 +1379,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   padding: 14px 18px;
   border-bottom: 1px solid var(--dm-line);
-  font-size: 16px;
+  font-size: var(--fs-lg);
   font-weight: 600;
   color: var(--dm-text);
 }
@@ -1413,7 +1413,7 @@ onBeforeUnmount(() => {
   padding: 14px 16px;
   margin: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 11.5px;
+  font-size: var(--fs-2xs);
   line-height: 1.6;
   color: var(--dm-text);
   background: var(--dm-surface2);

@@ -228,12 +228,12 @@ function onMove(ev) {
   background: var(--dm-card);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
   color: var(--dm-text);
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 .mc-tip-label {
   margin-bottom: 4px;
   color: var(--dm-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
 }
 .mc-tip-row {
   display: flex;

@@ -22,7 +22,7 @@ export const buttonVariants = cva(
         icon: "p-[0.38rem] rounded-[0.5rem] border-line text-muted bg-transparent hover:border-[#3a4456] hover:text-text hover:bg-surface2",
       },
       size: {
-        default: "px-[0.9rem] py-[0.45rem]",
+        default: "px-[0.8rem] py-[0.35rem] text-[0.78rem]",
         sm: "px-[0.6rem] py-[0.28rem] text-[0.78rem] rounded-[0.5rem]",
         icon: "p-[0.38rem] rounded-[0.5rem]",
         "icon-sm": "p-[0.38rem] rounded-[0.5rem]",

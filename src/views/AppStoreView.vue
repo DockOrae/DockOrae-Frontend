@@ -14,17 +14,17 @@
 
     <!-- 分类(1Panel 同款:顶部横向标签) -->
     <div class="flex flex-wrap items-center gap-1.5">
-      <button class="px-2.5 py-1 rounded-full text-[12px] transition-colors" :class="cat === '' ? 'bg-brand text-white font-medium' : 'bg-surface2 text-muted hover:text-text'" @click="cat = ''">
+      <button class="px-3.5 py-1.5 rounded-full text-[14px] transition-colors" :class="cat === '' ? 'bg-brand text-white font-medium' : 'bg-surface2 text-muted hover:text-text'" @click="cat = ''">
         {{ t('appStore.all') }}
       </button>
-      <button v-for="c in categories" :key="c" class="px-2.5 py-1 rounded-full text-[12px] transition-colors" :class="cat === c ? 'bg-brand text-white font-medium' : 'bg-surface2 text-muted hover:text-text'" @click="cat = c">
-        {{ c }}
+      <button v-for="c in categories" :key="c" class="px-3.5 py-1.5 rounded-full text-[14px] transition-colors" :class="cat === c ? 'bg-brand text-white font-medium' : 'bg-surface2 text-muted hover:text-text'" @click="cat = c">
+        {{ catLabel(c) }}
       </button>
       <span class="w-px h-4 bg-line mx-1.5" />
-      <button class="px-2.5 py-1 rounded-full text-[12px] transition-colors" :class="cat === '__installed' ? 'bg-brand text-white font-medium' : 'bg-surface2 text-muted hover:text-text'" @click="cat = '__installed'">
+      <button class="px-3.5 py-1.5 rounded-full text-[14px] transition-colors" :class="cat === '__installed' ? 'bg-brand text-white font-medium' : 'bg-surface2 text-muted hover:text-text'" @click="cat = '__installed'">
         {{ t('appStore.installed') }} ({{ installedCount }})
       </button>
-      <button class="px-2.5 py-1 rounded-full text-[12px] transition-colors" :class="cat === '__updatable' ? 'bg-brand text-white font-medium' : 'bg-surface2 text-muted hover:text-text'" @click="cat = '__updatable'">
+      <button class="px-3.5 py-1.5 rounded-full text-[14px] transition-colors" :class="cat === '__updatable' ? 'bg-brand text-white font-medium' : 'bg-surface2 text-muted hover:text-text'" @click="cat = '__updatable'">
         {{ t('appStore.updatable') }} ({{ updatableCount }})
       </button>
     </div>
@@ -50,7 +50,7 @@
                 <span class="app-description">{{ a.description }}</span>
               </div>
               <div class="content-bottom">
-                <span class="cat-tag">{{ a.category }}</span>
+                <span class="cat-tag">{{ catLabel(a.category) }}</span>
                 <Button v-if="!a.installed" variant="brand" @click.stop="openDetail(a)"><Icon name="download" size="11" /> {{ t('appStore.install') }}</Button>
                 <span v-else class="flex items-center gap-1.5">
                   <Button :variant="a.update_available ? 'warning' : 'ghost'" @click.stop="quickUpgrade(a)"><Icon name="refresh" size="11" /> {{ t('appStore.upgrade') }}</Button>
@@ -158,6 +158,37 @@ const apps = ref([])
 const categories = ref([])
 const keyword = ref('')
 const cat = ref('')
+
+// 应用商店分类翻译:DockOrae-Apps data.yml 顶层 tags 是中文原始值,
+// 前端映射到 i18n key(简中/繁中/英文),未知分类原样显示
+const CAT_KEYS = {
+  实用工具: 'appStore.catTools',
+  AI: 'appStore.catAI',
+  数据库: 'appStore.catDatabase',
+  DevOps: 'appStore.catDevOps',
+  开发工具: 'appStore.catDevTools',
+  建站: 'appStore.catWebsite',
+  中间件: 'appStore.catMiddleware',
+  安全: 'appStore.catSecurity',
+  多媒体: 'appStore.catMedia',
+  运行环境: 'appStore.catRuntime',
+  云存储: 'appStore.catStorage',
+  休闲游戏: 'appStore.catGames',
+  'Web 服务器': 'appStore.catWebServer',
+  邮件服务: 'appStore.catEmail',
+  CRM: 'appStore.catCRM',
+  Tool: 'appStore.catTool',
+  工具: 'appStore.catTool',
+  BI: 'appStore.catBI',
+  监控: 'appStore.catMonitoring',
+  面板工具: 'appStore.catPanelTools',
+  'Web 服务': 'appStore.catWeb',
+  存储: 'appStore.catStorage2',
+  运维监控: 'appStore.catOpsMonitor',
+}
+function catLabel(c) {
+  return CAT_KEYS[c] ? t(CAT_KEYS[c]) : c
+}
 const detail = ref(null)
 const params = reactive({})
 const showPwd = reactive({})
@@ -382,7 +413,7 @@ onMounted(load)
   border-radius: 8px;
 }
 .emoji-fallback {
-  font-size: 28px;
+  font-size: var(--fs-3xl);
   line-height: 1;
 }
 .app-content {
@@ -399,11 +430,11 @@ onMounted(load)
   gap: 6px;
 }
 .app-title {
-  font-size: 16px;
+  font-size: var(--fs-lg);
   font-weight: 600;
 }
 .installed-tag {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 1px 8px;
   border-radius: 999px;
   white-space: nowrap;
@@ -412,7 +443,7 @@ onMounted(load)
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 .update-tag {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 1px 8px;
   border-radius: 999px;
   white-space: nowrap;
@@ -430,7 +461,7 @@ onMounted(load)
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--color-muted);
   line-height: 1.4;
   height: 2.8em;
@@ -443,7 +474,7 @@ onMounted(load)
   margin-top: 6px;
 }
 .cat-tag {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   padding: 1px 8px;
   border-radius: 999px;
   background: rgba(236, 72, 153, 0.1);

@@ -7,10 +7,10 @@
       @mouseenter="onEnter"
       @mouseleave="onLeave"
     >
-      <!-- 品牌区:logo 图标 + DockOrae 名字 -->
+      <!-- 品牌区:Docker 图标 + DockOrae 名字 -->
       <div class="sider-brand">
         <div class="brand-block" @click="$router.push('/')">
-          <img src="/logo.svg" alt="logo" class="brand-logo" />
+          <img src="/images/logo.svg" alt="logo" class="brand-logo" />
           <span v-if="expanded || pinned" class="brand-name">{{ t('app.name') }}</span>
         </div>
         <div v-if="expanded || pinned" class="brand-actions">
@@ -41,7 +41,12 @@
           :title="expanded || pinned ? '' : t(item.labelKey)"
         >
           <Icon :name="item.icon" size="16" class="nav-icon" />
-          <span v-if="expanded || pinned" class="nav-label">{{ t(item.labelKey) }}</span>
+          <span v-if="expanded || pinned" class="nav-label">
+            <template v-for="(p, i) in splitLatin(t(item.labelKey))" :key="i">
+              <span v-if="p.latin" class="latin">{{ p.seg }}</span>
+              <template v-else>{{ p.seg }}</template>
+            </template>
+          </span>
         </router-link>
 
         <!-- 面板设置(点击展开子菜单:所有设置项,仿 3x-ui;父级不高亮,只高亮选中的子项) -->
@@ -56,21 +61,31 @@
             :title="expanded || pinned ? '' : t('settings.panelSettings')"
           >
             <Icon name="settings" size="16" class="nav-icon" />
-            <span v-if="expanded || pinned" class="nav-label">{{ t('settings.panelSettings') }}</span>
+            <span v-if="expanded || pinned" class="nav-label">
+              <template v-for="(p, i) in splitLatin(t('settings.panelSettings'))" :key="i">
+                <span v-if="p.latin" class="latin">{{ p.seg }}</span>
+                <template v-else>{{ p.seg }}</template>
+              </template>
+            </span>
             <Icon v-if="expanded || pinned" name="chevronsUp" size="11" class="nav-caret" :class="{ open: settingsOpen }" />
           </button>
-          <div v-if="(expanded || pinned) && settingsOpen" class="menu-sub">
-            <router-link
-              v-for="sub in settingsSubs"
-              :key="sub.hash"
-              :to="'/settings' + sub.hash"
-              class="sub-item"
-              :class="{ active: isSettingsChild && route.path === '/settings' && route.hash === sub.hash }"
-            >
-              <Icon :name="sub.icon" size="14" class="sub-icon" />
-              {{ t(sub.labelKey) }}
-            </router-link>
-          </div>
+          <Transition name="dm-sub">
+            <div v-if="(expanded || pinned) && settingsOpen" class="menu-sub">
+              <router-link
+                v-for="sub in settingsSubs"
+                :key="sub.hash"
+                :to="'/settings' + sub.hash"
+                class="sub-item"
+                :class="{ active: isSettingsChild && route.path === '/settings' && route.hash === sub.hash }"
+              >
+                <Icon :name="sub.icon" size="14" class="sub-icon" />
+                <template v-for="(p, i) in splitLatin(t(sub.labelKey))" :key="i">
+                  <span v-if="p.latin" class="latin">{{ p.seg }}</span>
+                  <template v-else>{{ p.seg }}</template>
+                </template>
+              </router-link>
+            </div>
+          </Transition>
         </div>
       </nav>
 
@@ -86,7 +101,12 @@
     <!-- 主区域 -->
     <div :class="['panel-main', { expanded: expanded || pinned }]">
       <header class="app-header">
-        <h1 class="page-title">{{ t($route.meta.title || '') }}</h1>
+        <h1 class="page-title">
+          <template v-for="(p, i) in splitLatin(pageTitle)" :key="i">
+            <span v-if="p.latin" class="latin">{{ p.seg }}</span>
+            <template v-else>{{ p.seg }}</template>
+          </template>
+        </h1>
         <div class="header-actions">
           <ThemeToggle />
           <ToggleLocale />
@@ -132,20 +152,20 @@
       </main>
 
       <footer class="app-footer">
-        <a href="https://github.com/MinimaxFlora" target="_blank" rel="noopener" class="hover:text-brand transition-colors">
+        <a href="https://github.com/MinimaxFlora" target="_blank" rel="noopener" class="hover:text-brand transition-colors" :class="{ latin: hasLatin('Copyright © ' + year + ' MinimaxFlora') }">
           Copyright © {{ year }} MinimaxFlora
         </a>
         <div class="ml-auto flex items-center gap-3">
-          <a href="https://github.com/DockOrae/DockOrae" target="_blank" rel="noopener" class="hover:text-brand transition-colors">
+          <a href="https://github.com/DockOrae/DockOrae" target="_blank" rel="noopener" class="hover:text-brand transition-colors" :class="{ latin: hasLatin(t('footer.project')) }">
             {{ t('footer.project') }}
           </a>
           <span class="text-muted">|</span>
-          <a href="https://github.com/DockOrae/DockOrae#readme" target="_blank" rel="noopener" class="hover:text-brand transition-colors">
+          <a href="https://github.com/DockOrae/DockOrae#readme" target="_blank" rel="noopener" class="hover:text-brand transition-colors" :class="{ latin: hasLatin(t('footer.manual')) }">
             {{ t('footer.manual') }}
           </a>
           <span class="text-muted">|</span>
           <span class="flex items-center gap-1.5">
-            <span :class="licenseActive ? 'text-brand font-semibold' : ''">
+            <span :class="[licenseActive ? 'text-brand font-semibold' : '', { latin: hasLatin(t(licenseActive ? 'license.pro' : 'license.community')) }]">
               {{ licenseActive ? t('license.pro') : t('license.community') }}
             </span>
             <button
@@ -241,14 +261,43 @@ const navs = [
 ]
 
 // 面板设置子菜单(仿 3x-ui:常规/安全/TG/邮件/许可证/关于;证书与日期时间在常规页内横向 tab)
+// 图标各自独立:常规=调谐滑块、安全=锁、TG=小飞机、邮件=信封、许可证=钥匙、关于=信息
 const settingsSubs = [
-  { hash: '#general', labelKey: 'settings.general', icon: 'settings' },
+  { hash: '#general', labelKey: 'settings.general', icon: 'tune' },
   { hash: '#security', labelKey: 'settings.securitySettings', icon: 'lock' },
   { hash: '#telegram', labelKey: 'settings.telegramBot', icon: 'send' },
   { hash: '#email', labelKey: 'settings.emailSettings', icon: 'mail' },
   { hash: '#license', labelKey: 'license.title', icon: 'key' },
   { hash: '#about', labelKey: 'settings.about', icon: 'info' },
 ]
+
+// 设置页子页标题(header 标题跟随子选项名称:保存按钮上方的"设置"→ 当前子选项)
+const settingsTitleKeys = {
+  '#general': 'settings.general',
+  '#cert': 'settings.certificate',
+  '#datetime': 'settings.dateTime',
+  '#security': 'settings.securitySettings',
+  '#telegram': 'settings.telegramBot',
+  '#email': 'settings.emailSettings',
+  '#license': 'license.title',
+  '#about': 'settings.about',
+}
+const pageTitle = computed(() => {
+  if (route.path === '/settings' && settingsTitleKeys[route.hash]) return t(settingsTitleKeys[route.hash])
+  return t(route.meta.title || '')
+})
+
+// 标签含英文(如 Compose 栈 / Telegram 机器人)时英文段单独放小,中文保持原字号
+function hasLatin(s) {
+  return /[A-Za-z]/.test(s || '')
+}
+// 把文本切成"英文段/非英文段",英文段渲染为 .latin(字号略小)
+function splitLatin(s) {
+  return String(s || '')
+    .split(/([A-Za-z0-9]+)/)
+    .filter(Boolean)
+    .map((seg) => ({ seg, latin: /^[A-Za-z0-9]+$/.test(seg) }))
+}
 const settingsOpen = ref(false)
 const isSettingsChild = computed(() => {
   if (route.path !== '/settings') return false
@@ -329,11 +378,16 @@ function logout() {
 .brand-block {
   display: flex;
   align-items: center;
-  justify-content: center; /* 展开/收起 logo 都居中(仿 3x-ui) */
-  gap: 8px;
+  justify-content: center; /* 收起态:logo 居中(仿 3x-ui) */
+  gap: 18px;
   min-width: 0;
   cursor: pointer;
   flex: 1;
+}
+/* 展开态:logo 靠左往前(用户要求),名字跟在后面 */
+.app-sider.expanded .brand-block {
+  justify-content: flex-start;
+  padding-left: 12px;
 }
 .brand-logo {
   width: 30px;
@@ -342,17 +396,13 @@ function logout() {
   flex-shrink: 0;
 }
 .brand-name {
-  /* 品牌名:英文用系统字体(Inter),中文自动走元气泡泡;字号加大、下沉一点 */
-  font-size: 19px;
+  /* 品牌名:艺术字体栈(英文 BlueCustard / 中文 YuanQI),纯品牌粉色(不渐变) */
+  font-size: var(--fs-xl);
   font-weight: 700;
   letter-spacing: 0.5px;
   line-height: 1.2;
-  padding-top: 3px;
-  background: linear-gradient(135deg, var(--color-accent), #ec4899);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  padding-top: 2px;
+  color: var(--color-brand);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -403,7 +453,7 @@ function logout() {
   margin: 4px 0;
   padding: 0 12px;
   border-radius: 8px;
-  font-size: 17px;
+  font-size: var(--fs-xl2);
   font-weight: 500;
   color: var(--dm-muted);
   text-decoration: none;
@@ -430,6 +480,11 @@ function logout() {
 .nav-item.is-collapsed .nav-label {
   display: none;
 }
+/* 菜单标签内英文段(Compose / Telegram 等)单独放小,中文保持 19px */
+.nav-label .latin,
+.sub-item .latin {
+  font-size: var(--fs-md);
+}
 .nav-item.is-collapsed .nav-icon {
   margin: 0;
 }
@@ -444,29 +499,46 @@ function logout() {
 }
 
 /* 面板设置子菜单(仿 3x-ui antd Menu:子项带图标) */
+/* caret 绝对定位右侧,不参与 flex 布局 —— 否则 margin-left:auto 会把
+   图标+文字整体挤到左侧,与其余菜单项(内容居中)不一致 */
 .nav-caret {
-  margin-left: auto;
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--dm-muted);
   transition: transform 0.2s;
   flex-shrink: 0;
 }
 .nav-caret.open {
-  transform: rotate(180deg);
+  transform: translateY(-50%) rotate(180deg);
 }
 .menu-sub {
   padding: 2px 0 6px;
+}
+/* 面板设置子菜单展开/收起动画(入场/离场淡入下滑) */
+.dm-sub-enter-active,
+.dm-sub-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.dm-sub-enter-from,
+.dm-sub-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 .sub-item {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 34px;
+  justify-content: center; /* 与主菜单项一致:内容居中 */
+  gap: 8px;
+  height: 36px;
   margin: 2px 4px;
   padding: 0 10px;
   border-radius: 8px;
   color: var(--dm-muted);
-  font-size: 12.5px;
+  font-size: var(--fs-xl2);
+  font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
   transition: background 0.15s, color 0.15s;
@@ -505,7 +577,7 @@ function logout() {
   border-radius: 8px;
   background: transparent;
   color: #f87171;
-  font-size: 13.5px;
+  font-size: var(--fs-lg2);
   font-weight: 500;
   cursor: pointer;
   text-align: center;
@@ -561,9 +633,13 @@ function logout() {
   flex-shrink: 0;
 }
 .page-title {
-  font-size: 15px;
+  font-size: var(--fs-2xl);
   font-weight: 600;
   color: var(--dm-text);
+}
+/* 页标题内英文段(Compose 栈 / Telegram 机器人)单独放小,中文保持 22px */
+.page-title .latin {
+  font-size: var(--fs-xl);
 }
 .header-actions {
   margin-left: auto;
@@ -612,7 +688,7 @@ function logout() {
   align-items: center;
   gap: 12px;
   padding: 9px 20px;
-  font-size: 15px;
+  font-size: var(--fs-md2);
   background: rgba(245, 158, 11, 0.14);
   border-bottom: 1px solid rgba(245, 158, 11, 0.3);
   color: #fbbf24;
@@ -639,11 +715,15 @@ function logout() {
   align-items: center;
   gap: 16px;
   padding: 10px 20px;
-  font-size: 15px;
+  font-size: var(--fs-lg2);
   color: var(--dm-footer-color);
   background: var(--dm-surface);
   border-top: 1px solid var(--dm-line);
   flex-shrink: 0;
   flex-wrap: wrap;
+}
+/* 页脚含英文的项(Copyright 行 / Project / Manual / Community)略小 */
+.app-footer .latin {
+  font-size: var(--fs-md2);
 }
 </style>

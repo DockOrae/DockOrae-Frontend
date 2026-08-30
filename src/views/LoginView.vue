@@ -1,7 +1,7 @@
 <template>
   <div :class="['login-app', { 'is-dark': isDark }]">
     <!-- 背景图 + 遮罩(1Panel 风格;自定义壁纸优先,失败回退内置 bg.jpg) -->
-    <img :src="bgFailed ? '/bg.jpg' : '/api/system/wallpaper'" alt="" class="login-bg" @error="onBgError" />
+    <img :src="bgFailed ? '/images/bg.jpg' : '/api/system/wallpaper'" alt="" class="login-bg" @error="onBgError" />
     <div class="login-bg-overlay" />
     <!-- 右上角工具栏:主题切换 + 语言切换(shadcn-vue 组件,与管理页一致) -->
     <div class="login-toolbar">
@@ -12,7 +12,7 @@
     <div class="login-wrapper">
       <div class="login-card">
         <div class="brand">
-          <img src="/logo.svg" alt="logo" class="brand-logo" />
+          <img src="/images/logo.svg" alt="logo" class="brand-logo" />
           <span class="brand-name">{{ t('app.name') }}</span>
           <span class="brand-accent" aria-hidden="true" />
         </div>
@@ -415,17 +415,13 @@ async function doTotp() {
   object-fit: contain;
 }
 .brand-name {
-  /* 品牌名:英文用系统字体(Inter),中文自动走元气泡泡;字号加大 */
-  font-size: 32px;
+  /* 品牌名:艺术字体栈(英文 BlueCustard / 中文 YuanQI),纯品牌粉色(不渐变,与侧边栏一致) */
+  font-size: var(--fs-4xl);
   font-weight: 700;
   letter-spacing: 1.5px;
   line-height: 1.35;
   padding: 4px 0 2px;
-  background: linear-gradient(135deg, var(--color-accent), #ec4899);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: var(--color-brand);
 }
 .brand-accent {
   display: block;
@@ -437,9 +433,9 @@ async function doTotp() {
 .welcome {
   text-align: center;
   color: var(--color-text);
-  /* 中文标题用元气泡泡艺术字(英文 fallback 系统字体) */
+  /* 中文标题:全局艺术字体栈(中文自动 YuanQI) */
   font-family: var(--font-cn);
-  font-size: 22px;
+  font-size: var(--fs-2xl);
   font-weight: 600;
   line-height: 1.2;
   min-height: 30px;
@@ -469,7 +465,7 @@ async function doTotp() {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #ef4444;
-  font-size: 15px;
+  font-size: var(--fs-md2);
 }
 
 /* ---------- 表单 ---------- */
@@ -477,7 +473,7 @@ async function doTotp() {
   display: block;
   color: var(--color-text);
   font-weight: 500;
-  font-size: 16px;
+  font-size: var(--fs-lg);
   margin: 14px 0 6px;
 }
 .f-field {
@@ -500,7 +496,7 @@ async function doTotp() {
   border: 1px solid rgba(0, 0, 0, 0.12);
   background: var(--bg-card-solid);
   color: var(--color-text);
-  font-size: 17px;
+  font-size: var(--fs-lg2);
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
@@ -531,7 +527,7 @@ async function doTotp() {
   text-align: center;
   letter-spacing: 0.5em;
   font-family: ui-monospace, monospace;
-  font-size: 16px;
+  font-size: var(--fs-lg);
 }
 .f-submit {
   width: 100%;
@@ -541,7 +537,7 @@ async function doTotp() {
   border-radius: 10px;
   background: linear-gradient(135deg, #ec4899, #d946ef);
   color: #fff;
-  font-size: 16px;
+  font-size: var(--fs-lg);
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -577,7 +573,7 @@ async function doTotp() {
   border: none;
   background: transparent;
   color: var(--color-text-subtle);
-  font-size: 14px;
+  font-size: var(--fs-md);
   cursor: pointer;
   text-align: center;
 }
@@ -586,13 +582,13 @@ async function doTotp() {
 }
 .f-hint {
   color: var(--color-text-subtle);
-  font-size: 14px;
+  font-size: var(--fs-md);
   margin: 0 0 6px;
 }
 
 .default-hint {
   text-align: center;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--color-text-subtle);
   margin-top: 16px;
 }

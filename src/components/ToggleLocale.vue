@@ -4,16 +4,18 @@
       <Button
         variant="ghost"
         size="icon"
+        class="locale-btn"
         :title="t('lang.toggle')"
         :aria-label="t('lang.toggle')"
       >
-        <Icon name="translate" size="16" filled />
+        <Icon name="translate" size="14" filled />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" class="w-52 max-h-80 overflow-y-auto">
       <DropdownMenuItem
         v-for="l in LANGS"
         :key="l.code"
+        class="text-[length:var(--fs-md2)]"
         :class="l.code === current.code ? 'text-brand' : ''"
         @select="onPick(l.code)"
       >
@@ -41,3 +43,12 @@ function onPick(code) {
   setLang(code)
 }
 </script>
+
+<style scoped>
+/* 语言切换按钮:比右侧 36px 圆钮略小(30px),图标同步缩小 */
+.locale-btn {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+}
+</style>

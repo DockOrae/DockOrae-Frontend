@@ -1,5 +1,5 @@
 <template>
-  <div class="settings-page">
+  <div class="settings-page fade-up">
                                      
     <main class="settings-content">
                                                                                     
@@ -210,7 +210,7 @@
                         
           <div class="flex items-center gap-4 mb-6">
             <img
-              :src="wallpaperFailed ? '/bg.jpg' : wallpaperPreview"
+              :src="wallpaperFailed ? '/images/bg.jpg' : wallpaperPreview"
               alt="wallpaper"
               class="w-36 h-24 rounded-xl object-cover ring-1 ring-line border border-line shadow"
               @error="onWallpaperError"
@@ -331,7 +331,7 @@
                                            
         <div class="h-tabs">
           <button type="button" class="h-tab" :class="{ active: tgTab === 'panel' }" @click="tgTab = 'panel'">
-            <Icon name="settings" size="13" class="inline mr-1 align-[-2px]" /> {{ t('settings.general') }}
+            <Icon name="send" size="13" class="inline mr-1 align-[-2px]" /> {{ t('settings.general') }}
           </button>
           <button type="button" class="h-tab" :class="{ active: tgTab === 'notify' }" @click="tgTab = 'notify'">
             <Icon name="clock" size="13" class="inline mr-1 align-[-2px]" /> {{ t('settings.notifications') }}
@@ -340,7 +340,6 @@
 
                      
         <Card v-if="tgTab === 'panel'" class="p-5">
-          <p class="text-[12px] text-muted mb-4">{{ t('settings.telegramDesc') }}</p>
 
           <div class="setting-row">
             <div class="sr-info">
@@ -1191,7 +1190,7 @@ const wallpaperFailed = ref(false)
 // 新选的壁纸(base64),随"保存"按钮一起上传
 const wallpaperPending = ref('')
 
-// 未上传自定义壁纸时回退内置 /bg.jpg(同登录页)
+// 未上传自定义壁纸时回退内置 /images/bg.jpg(同登录页)
 function onWallpaperError() {
   wallpaperFailed.value = true
 }
@@ -1559,7 +1558,7 @@ onMounted(() => {
 }
 
 .card-title {
-  font-size: 16px;
+  font-size: var(--fs-lg);
   font-weight: 600;
   color: var(--dm-text);
   margin-bottom: 16px;
@@ -1581,7 +1580,7 @@ onMounted(() => {
   border: none;
   background: transparent;
   color: var(--dm-muted);
-  font-size: 13.5px;
+  font-size: var(--fs-md2);
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
@@ -1611,7 +1610,7 @@ onMounted(() => {
   gap: 8px;
   padding: 6px 12px;
   border-radius: 8px;
-  font-size: 12.5px;
+  font-size: var(--fs-md);
   color: #fbbf24;
   background: rgba(245, 158, 11, 0.12);
   border: 1px solid rgba(245, 158, 11, 0.35);
@@ -1633,12 +1632,12 @@ onMounted(() => {
   min-width: 0;
 }
 .sr-label {
-  font-size: 15px;
+  font-size: var(--fs-lg);
   font-weight: 500;
   color: var(--dm-text);
 }
 .sr-desc {
-  font-size: 11.5px;
+  font-size: var(--fs-md);
   color: var(--dm-muted);
   margin-top: 2px;
   line-height: 1.45;
@@ -1699,7 +1698,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--dm-text);
   margin-bottom: 6px;
@@ -1709,7 +1708,7 @@ onMounted(() => {
 }
 .ng-count {
   margin-left: auto;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--dm-muted);
   background: var(--dm-surface2);
@@ -1723,7 +1722,7 @@ onMounted(() => {
   gap: 8px;
   padding: 5px 4px;
   border-radius: 6px;
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   color: var(--dm-muted);
   cursor: pointer;
   user-select: none;
@@ -1753,7 +1752,7 @@ onMounted(() => {
   border-radius: 999px;
   border: 1px solid var(--dm-line);
   background: var(--dm-surface2);
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--dm-muted);
   cursor: pointer;
   user-select: none;

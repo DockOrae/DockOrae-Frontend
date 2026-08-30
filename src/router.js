@@ -3,6 +3,8 @@ import { getToken, getPublicConfig } from './api'
 
 const routes = [
   { path: '/login', name: 'login', component: () => import('./views/LoginView.vue'), meta: { public: true } },
+  // 字体验收页(开发用,不在导航中,可直接访问 /typography)
+  { path: '/typography', name: 'typography', component: () => import('./views/TypographyView.vue'), meta: { public: true } },
   {
     path: '/',
     component: () => import('./layouts/MainLayout.vue'),

@@ -711,6 +711,30 @@ export default {
     installed: '已安裝',
     count: '共 {count} 個應用',
 
+    /* 應用商店分類(數據來自 DockOrae/DockOrae-Apps data.yml 頂層 tags,前端映射翻譯) */
+    catTools: '實用工具',
+    catAI: 'AI',
+    catDatabase: '資料庫',
+    catDevOps: 'DevOps',
+    catDevTools: '開發工具',
+    catWebsite: '建站',
+    catMiddleware: '中介軟體',
+    catSecurity: '安全',
+    catMedia: '多媒體',
+    catRuntime: '執行環境',
+    catStorage: '雲端儲存',
+    catGames: '休閒遊戲',
+    catWebServer: 'Web 伺服器',
+    catEmail: '郵件服務',
+    catCRM: 'CRM',
+    catTool: '工具',
+    catBI: 'BI',
+    catMonitoring: '監控',
+    catPanelTools: '面板工具',
+    catWeb: 'Web 服務',
+    catStorage2: '儲存',
+    catOpsMonitor: '維運監控',
+
 
 
     empty: '沒有符合條件的應用',
