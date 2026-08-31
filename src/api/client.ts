@@ -10,7 +10,7 @@ import type { ApiErrorKind, ApiErrorLike, ApiRequestOptions, PublicConfig } from
 import type { PullProgressLine } from '../types'
 
 /** 后端返回 i18n key 或英文消息;翻译 key,其余原样保留 */
-export function errMsg(m: string): string {
+function errMsg(m: string): string {
   try {
     const s = t(m)
     return s && s !== m ? s : m
@@ -58,10 +58,6 @@ export async function getPublicConfig(): Promise<PublicConfig> {
 }
 
 /** 安全入口前缀(API/WS/页面跳转统一使用;留空 = 无前缀) */
-export function apiBase(): string {
-  return cachedBase
-}
-
 export function entrancePath(p: string): string {
   return cachedBase ? cachedBase + p : p
 }

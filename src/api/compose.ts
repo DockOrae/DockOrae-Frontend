@@ -2,10 +2,7 @@
  * Compose API(部署/更新为 NDJSON 进度流)。
  */
 import { api, composeStream } from './client'
-import type { ComposeAdoptPayload, ComposeDeployPayload, ComposeInspect, ComposeProject, OkResponse } from '../types'
-
-/** Compose 栈列表 */
-export const listCompose = () => api<ComposeProject[]>('/compose')
+import type { ComposeAdoptPayload, ComposeDeployPayload, ComposeInspect, OkResponse } from '../types'
 
 /** Compose 栈详情 */
 export const inspectCompose = (project: string) => api<ComposeInspect>(`/compose/${project}`)
