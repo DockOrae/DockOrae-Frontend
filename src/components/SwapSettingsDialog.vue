@@ -36,14 +36,22 @@
 
       <p v-if="error" class="text-xs text-danger">{{ error }}</p>
 
-      <DialogFooter>
-        <DialogClose as-child>
-          <Button variant="ghost" size="sm">{{ t('common.cancel') }}</Button>
-        </DialogClose>
-        <Button variant="brand" size="sm" :disabled="busy" @click="onApply">
-          <span v-if="busy" class="animate-spin mr-1.5 inline-block h-3 w-3 border-2 border-current border-t-transparent rounded-full" />
-          {{ busy ? t('agent.swap.applying') : t('agent.swap.apply') }}
-        </Button>
+      <DialogFooter class="justify-between">
+        <div class="flex items-center gap-2">
+          <!-- 删除 swap(仅已启用时显示;危险操作,二次确认后执行) -->
+          <Button v-if="props.status?.enabled" variant="destructive" size="sm" :disabled="busy" @click="onDelete">
+            {{ busy ? t('agent.swap.deleting') : t('agent.swap.delete') }}
+          </Button>
+        </div>
+        <div class="flex items-center gap-2">
+          <DialogClose as-child>
+            <Button variant="ghost" size="sm">{{ t('common.cancel') }}</Button>
+          </DialogClose>
+          <Button variant="brand" size="sm" :disabled="busy" @click="onApply">
+            <span v-if="busy" class="animate-spin mr-1.5 inline-block h-3 w-3 border-2 border-current border-t-transparent rounded-full" />
+            {{ busy ? t('agent.swap.applying') : t('agent.swap.apply') }}
+          </Button>
+        </div>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -115,6 +123,22 @@ async function onApply() {
     await swapAction({ action, size_mb: size, confirm: true })
     emit('update:open', false)
     emit('updated') // 父组件重新请求 swap.status 更新卡片
+  } catch (e) {
+    error.value = (e as Error).message
+  } finally {
+    busy.value = false
+  }
+}
+
+/** 删除 swap(危险操作,需确认;成功后父组件重查状态刷新卡片) */
+async function onDelete() {
+  if (!window.confirm(t('agent.swap.deleteConfirm'))) return
+  busy.value = true
+  error.value = ''
+  try {
+    await swapAction({ action: 'delete', confirm: true })
+    emit('update:open', false)
+    emit('updated')
   } catch (e) {
     error.value = (e as Error).message
   } finally {

@@ -43,8 +43,8 @@
           </button>
         </div>
         <div class="ov-tile-value">
-          <span class="ov-tile-number">{{ v.percent.toFixed(1) }}</span>
-          <span class="ov-tile-unit">%</span>
+          <span class="ov-tile-number">{{ v.bigText ?? v.percent.toFixed(1) }}</span>
+          <span class="ov-tile-unit" v-if="!v.bigText">%</span>
         </div>
         <div class="ov-tile-detail">{{ v.detail }}</div>
         <div class="ov-tile-foot">
@@ -426,6 +426,12 @@ const swapSub = computed(() => {
   const s = mon.value.swap
   return s ? `${fmtBytes(s.used)} / ${fmtBytes(s.total)}` : '-'
 })
+/** swap 大数字:启用显示总量(如 512MB),未启用显示 0(让设置生效直观可见) */
+const swapBigText = computed(() => {
+  const s = mon.value.swap
+  if (!s || !s.total) return '0'
+  return fmtBytes(s.total)
+})
 const memPct = computed(() => mon.value.mem?.pct ?? 0)
 const memSub = computed(() => {
   const m = mon.value.mem
@@ -474,6 +480,8 @@ interface VitalsItem {
   data: number[]
   footLeft: string
   footRight: string
+  /** 大数字自定义文本(如 swap 显示总量),缺省显示 percent% */
+  bigText?: string
   /** 卡片头部可选操作按钮(仅 Swap 卡有:设置大小) */
   action?: { label: string; onClick: () => void }
 }
@@ -494,6 +502,7 @@ const vitals = computed<VitalsItem[]>(() => [
   {
     icon: 'swap', label: t('dashboard.swap'), percent: swapPct.value, color: '#fbbf24',
     detail: swapSub.value, data: hist.value.swap,
+    bigText: swapBigText.value,
     footLeft: `${t('dashboard.avg')} ${avg(hist.value.swap).toFixed(0)}%`,
     footRight: `${t('dashboard.peak')} ${peak(hist.value.swap).toFixed(0)}%`,
     action: { label: t('agent.swap.settings'), onClick: openSwapSettings },
