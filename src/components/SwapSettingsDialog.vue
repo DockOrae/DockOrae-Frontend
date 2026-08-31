@@ -8,8 +8,8 @@
         </DialogDescription>
       </DialogHeader>
 
-      <!-- 左右布局:左=大小选项,右=当前状态 -->
-      <div class="grid grid-cols-5 gap-6 py-2">
+      <!-- 左右布局:左=大小选项,右=当前状态(px-5 与标题对齐,避免内容贴弹窗左右边框) -->
+      <div class="grid grid-cols-5 gap-8 px-5 py-4">
         <!-- 左栏:预设大小(§13:仅 512MB/1GB/2GB/4GB/自定义) -->
         <div class="col-span-3 space-y-3">
           <div class="grid grid-cols-2 gap-3">
@@ -63,7 +63,7 @@
         </div>
       </div>
 
-      <DialogFooter>
+      <DialogFooter class="px-5 pb-4 pt-0">
         <DialogClose as-child>
           <Button variant="ghost" size="sm">{{ t('common.cancel') }}</Button>
         </DialogClose>
