@@ -1,29 +1,29 @@
 <template>
   <Dialog :open="open" @update:open="(v: boolean) => emit('update:open', v)">
-    <DialogContent class="sm:max-w-lg">
+    <DialogContent class="sm:max-w-2xl">
       <DialogHeader>
-        <DialogTitle class="text-sm font-semibold">{{ t('agent.swap.settings') }}</DialogTitle>
+        <DialogTitle class="text-base font-semibold">{{ t('agent.swap.settings') }}</DialogTitle>
         <DialogDescription class="text-xs">
           {{ currentText }}
         </DialogDescription>
       </DialogHeader>
 
       <!-- 左右布局:左=大小选项,右=当前状态 -->
-      <div class="grid grid-cols-5 gap-4 py-1">
+      <div class="grid grid-cols-5 gap-6 py-2">
         <!-- 左栏:预设大小(§13:仅 512MB/1GB/2GB/4GB/自定义) -->
-        <div class="col-span-3 space-y-2">
-          <div class="grid grid-cols-2 gap-2">
+        <div class="col-span-3 space-y-3">
+          <div class="grid grid-cols-2 gap-3">
             <label
               v-for="p in presets"
               :key="p.size"
-              class="flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer text-sm transition-colors"
+              class="flex items-center gap-2.5 rounded-lg border px-3.5 py-3 cursor-pointer text-sm transition-colors"
               :class="selectedSize === p.size ? 'border-brand bg-brand/10 text-brand' : 'border-border hover:border-brand/50'"
             >
               <input type="radio" :value="p.size" v-model="selectedSize" class="accent-brand" />
               {{ p.label }}
             </label>
             <label
-              class="flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer text-sm transition-colors"
+              class="flex items-center gap-2.5 rounded-lg border px-3.5 py-3 cursor-pointer text-sm transition-colors"
               :class="selectedSize === null ? 'border-brand bg-brand/10 text-brand' : 'border-border hover:border-brand/50'"
             >
               <input type="radio" :value="null" v-model="selectedSize" class="accent-brand" />
@@ -41,7 +41,7 @@
         </div>
 
         <!-- 右栏:当前状态 -->
-        <div class="col-span-2 rounded-lg border border-border bg-surface/50 p-3 space-y-1.5 text-xs">
+        <div class="col-span-2 rounded-lg border border-border bg-surface/50 p-4 space-y-2.5 text-sm">
           <div class="flex items-center justify-between">
             <span class="text-muted">{{ t('agent.swap.status') }}</span>
             <span :class="props.status?.enabled ? 'text-emerald-500' : 'text-muted'">
