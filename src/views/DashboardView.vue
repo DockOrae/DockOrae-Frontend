@@ -38,6 +38,9 @@
         <div class="ov-tile-head">
           <span class="ov-tile-icon"><Icon :name="v.icon" size="15" /></span>
           <span class="ov-kicker">{{ v.label }}</span>
+          <button v-if="v.action" type="button" class="ov-tile-action" :title="v.action.label" @click="v.action.onClick">
+            <Icon name="settings" size="13" />
+          </button>
         </div>
         <div class="ov-tile-value">
           <span class="ov-tile-number">{{ v.percent.toFixed(1) }}</span>
@@ -323,6 +326,9 @@
         />
       </div>
     </Modal>
+
+    <!-- ============ Swap 设置弹窗(§12:仅增加设置大小,不重做 Swap 卡片) ============ -->
+    <SwapSettingsDialog v-model:open="swapDialogOpen" :status="swapStatus" @updated="onSwapUpdated" />
   </div>
 </template>
 
@@ -332,10 +338,12 @@ import { useI18n } from 'vue-i18n'
 import MiniChart from '../components/MiniChart.vue'
 import Icon from '../components/Icon.vue'
 import Modal from '../components/Modal.vue'
+import SwapSettingsDialog from '../components/SwapSettingsDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api, getToken, entrancePath } from '../api'
+import { getSwapStatus } from '../api/agent'
 import { errorMessage, formatBytes } from '../util'
 import { toastErr, toastOk } from '../toast'
 import { useConfirm } from '../confirm'
@@ -348,6 +356,7 @@ import type {
   MonitorSnapshot,
   OkResponse,
   PanelLogsResponse,
+  SwapStatus,
   VolumeListItem,
 } from '../types'
 
@@ -376,6 +385,30 @@ const ioRate = ref<{ read: string; write: string }>({ read: '0 B/s', write: '0 B
 let monTimer: ReturnType<typeof setInterval> | null = null
 let dockerTimer: ReturnType<typeof setInterval> | null = null
 let clockTimer: ReturnType<typeof setInterval> | null = null
+
+// ---------- Swap 设置(经 Agent;§52:成功后重查 status,不用用户输入更新 UI) ----------
+const swapDialogOpen = ref(false)
+const swapStatus = ref<SwapStatus | null>(null)
+
+async function loadSwapStatus() {
+  try {
+    swapStatus.value = await getSwapStatus()
+  } catch {
+    swapStatus.value = null
+  }
+}
+
+function openSwapSettings() {
+  void loadSwapStatus().then(() => {
+    swapDialogOpen.value = true
+  })
+}
+
+function onSwapUpdated() {
+  // §52:重查真实状态 + 立即刷新监控卡
+  void loadSwapStatus()
+  void loadMonitor()
+}
 
 let timeOffset: number = 0
 const serverTimeText = ref('-')
@@ -441,6 +474,8 @@ interface VitalsItem {
   data: number[]
   footLeft: string
   footRight: string
+  /** 卡片头部可选操作按钮(仅 Swap 卡有:设置大小) */
+  action?: { label: string; onClick: () => void }
 }
 
 const vitals = computed<VitalsItem[]>(() => [
@@ -461,6 +496,7 @@ const vitals = computed<VitalsItem[]>(() => [
     detail: swapSub.value, data: hist.value.swap,
     footLeft: `${t('dashboard.avg')} ${avg(hist.value.swap).toFixed(0)}%`,
     footRight: `${t('dashboard.peak')} ${peak(hist.value.swap).toFixed(0)}%`,
+    action: { label: t('agent.swap.settings'), onClick: openSwapSettings },
   },
   {
     icon: 'drive', label: t('dashboard.storage'), percent: diskPct.value, color: '#34d399',
@@ -1062,6 +1098,25 @@ onBeforeUnmount(() => {
   gap: 8px;
   padding: 14px var(--ov-pad) 0;
   color: var(--ov-accent);
+}
+.ov-tile-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  padding: 3px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--dm-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+.ov-tile-action:hover {
+  color: var(--dm-text);
+  background: var(--dm-surface2);
+  border-color: var(--dm-line);
 }
 .ov-tile-icon {
   display: inline-flex;

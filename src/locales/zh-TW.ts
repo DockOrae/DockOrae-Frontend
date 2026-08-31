@@ -788,5 +788,18 @@ unboundDesc: '本機已解綁,Key 保留,可重新啟用。',
     togglePwd: '顯示/隱藏密碼',
     autoGenerate: '留空自動產生',
     generate: '產生',
+  agent: {
+    swap: {
+      settings: 'Swap 設定',
+      custom: '自訂',
+      customPlaceholder: '輸入大小 (MB)',
+      mb: 'MB',
+      apply: '套用',
+      applying: '處理中...',
+      minSize: '最小 512 MB',
+      disabled: '未啟用 · 點擊設定建立',
+    },
+    invalidAction: '無效的 Swap 操作',
+  },
   },
 }

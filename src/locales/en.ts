@@ -788,5 +788,18 @@ unboundDesc: 'This device is unbound; the key is kept and can be reactivated.',
     togglePwd: 'Show/Hide password',
     autoGenerate: 'Leave empty to auto-generate',
     generate: 'Generate',
+  agent: {
+    swap: {
+      settings: 'Swap Settings',
+      custom: 'Custom',
+      customPlaceholder: 'Enter size (MB)',
+      mb: 'MB',
+      apply: 'Apply',
+      applying: 'Processing...',
+      minSize: 'Minimum 512 MB',
+      disabled: 'Not enabled · Click to create',
+    },
+    invalidAction: 'Invalid swap action',
+  },
   },
 }

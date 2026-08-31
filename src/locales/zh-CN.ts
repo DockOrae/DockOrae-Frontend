@@ -789,5 +789,18 @@ unboundDesc: '本机已解绑,Key 保留,可重新激活。',
     togglePwd: '显示/隐藏密码',
     autoGenerate: '留空自动生成',
     generate: '生成',
+  agent: {
+    swap: {
+      settings: 'Swap 设置',
+      custom: '自定义',
+      customPlaceholder: '输入大小 (MB)',
+      mb: 'MB',
+      apply: '应用',
+      applying: '处理中...',
+      minSize: '最小 512 MB',
+      disabled: '未启用 · 点击设置创建',
+    },
+    invalidAction: '无效的 Swap 操作',
+  },
   },
 }
