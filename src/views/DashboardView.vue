@@ -38,9 +38,14 @@
         <div class="ov-tile-head">
           <span class="ov-tile-icon"><Icon :name="v.icon" size="15" /></span>
           <span class="ov-kicker">{{ v.label }}</span>
-          <button v-if="v.action" type="button" class="ov-tile-action" :title="v.action.label" @click="v.action.onClick">
-            <Icon name="settings" size="13" />
-          </button>
+          <div class="ov-tile-actions">
+            <button v-if="v.action" class="ov-tile-action" :title="v.action.label" @click="v.action.onClick">
+              <Icon name="settings" size="13" />
+            </button>
+            <button v-if="v.dangerAction" class="ov-tile-action ov-tile-danger" :title="v.dangerAction.label" @click="v.dangerAction.onClick">
+              <Icon name="trash" size="13" />
+            </button>
+          </div>
         </div>
         <div class="ov-tile-value">
           <span class="ov-tile-number">{{ v.bigText ?? v.percent.toFixed(1) }}</span>
@@ -343,7 +348,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api, getToken, entrancePath } from '../api'
-import { getSwapStatus } from '../api/agent'
+import { swapAction, getSwapStatus } from '@/api/agent'
 import { errorMessage, formatBytes } from '../util'
 import { toastErr, toastOk } from '../toast'
 import { useConfirm } from '../confirm'
@@ -402,6 +407,20 @@ function openSwapSettings() {
   void loadSwapStatus().then(() => {
     swapDialogOpen.value = true
   })
+}
+
+/** 卡片级删除 swap:项目确认弹窗 → delete → toast + 刷新卡片(§52) */
+async function openSwapDelete() {
+  const ok = await askConfirm(t('agent.swap.deleteConfirm'), { title: t('agent.swap.delete'), danger: true })
+  if (!ok) return
+  try {
+    await swapAction({ action: 'delete', confirm: true })
+    toastOk(t('agent.swap.deleted'))
+    await loadSwapStatus()
+    await loadMonitor()
+  } catch (e) {
+    toastErr((e as Error).message)
+  }
 }
 
 function onSwapUpdated() {
@@ -484,6 +503,8 @@ interface VitalsItem {
   bigText?: string
   /** 卡片头部可选操作按钮(仅 Swap 卡有:设置大小) */
   action?: { label: string; onClick: () => void }
+  /** 卡片头部危险操作按钮(仅 Swap 卡有:删除,放在设置按钮前面) */
+  dangerAction?: { label: string; onClick: () => void }
 }
 
 const vitals = computed<VitalsItem[]>(() => [
@@ -506,6 +527,7 @@ const vitals = computed<VitalsItem[]>(() => [
     footLeft: `${t('dashboard.avg')} ${avg(hist.value.swap).toFixed(0)}%`,
     footRight: `${t('dashboard.peak')} ${peak(hist.value.swap).toFixed(0)}%`,
     action: { label: t('agent.swap.settings'), onClick: openSwapSettings },
+    dangerAction: { label: t('agent.swap.delete'), onClick: openSwapDelete },
   },
   {
     icon: 'drive', label: t('dashboard.storage'), percent: diskPct.value, color: '#34d399',
@@ -1126,6 +1148,20 @@ onBeforeUnmount(() => {
   color: var(--dm-text);
   background: var(--dm-surface2);
   border-color: var(--dm-line);
+}
+.ov-tile-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+.ov-tile-danger {
+  color: #f87171;
+}
+.ov-tile-danger:hover {
+  color: #fca5a5;
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.25);
 }
 .ov-tile-icon {
   display: inline-flex;

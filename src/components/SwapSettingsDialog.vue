@@ -1,6 +1,6 @@
 <template>
   <Dialog :open="open" @update:open="(v: boolean) => emit('update:open', v)">
-    <DialogContent class="sm:max-w-md">
+    <DialogContent class="sm:max-w-lg">
       <DialogHeader>
         <DialogTitle class="text-sm font-semibold">{{ t('agent.swap.settings') }}</DialogTitle>
         <DialogDescription class="text-xs">
@@ -8,50 +8,69 @@
         </DialogDescription>
       </DialogHeader>
 
-      <!-- 预设大小(§13:仅 512MB/1GB/2GB/4GB/自定义) -->
-      <div class="grid grid-cols-2 gap-2 py-1">
-        <label
-          v-for="p in presets"
-          :key="p.size"
-          class="flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer text-sm transition-colors"
-          :class="selectedSize === p.size ? 'border-brand bg-brand/10 text-brand' : 'border-border hover:border-brand/50'"
-        >
-          <input type="radio" :value="p.size" v-model="selectedSize" class="accent-brand" />
-          {{ p.label }}
-        </label>
-        <label
-          class="flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer text-sm transition-colors"
-          :class="selectedSize === null ? 'border-brand bg-brand/10 text-brand' : 'border-border hover:border-brand/50'"
-        >
-          <input type="radio" :value="null" v-model="selectedSize" class="accent-brand" />
-          {{ t('agent.swap.custom') }}
-        </label>
+      <!-- 左右布局:左=大小选项,右=当前状态 -->
+      <div class="grid grid-cols-5 gap-4 py-1">
+        <!-- 左栏:预设大小(§13:仅 512MB/1GB/2GB/4GB/自定义) -->
+        <div class="col-span-3 space-y-2">
+          <div class="grid grid-cols-2 gap-2">
+            <label
+              v-for="p in presets"
+              :key="p.size"
+              class="flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer text-sm transition-colors"
+              :class="selectedSize === p.size ? 'border-brand bg-brand/10 text-brand' : 'border-border hover:border-brand/50'"
+            >
+              <input type="radio" :value="p.size" v-model="selectedSize" class="accent-brand" />
+              {{ p.label }}
+            </label>
+            <label
+              class="flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer text-sm transition-colors"
+              :class="selectedSize === null ? 'border-brand bg-brand/10 text-brand' : 'border-border hover:border-brand/50'"
+            >
+              <input type="radio" :value="null" v-model="selectedSize" class="accent-brand" />
+              {{ t('agent.swap.custom') }}
+            </label>
+          </div>
+
+          <!-- 自定义大小(仅自定义时显示,最小 512MB) -->
+          <div v-if="selectedSize === null" class="flex items-center gap-2">
+            <Input v-model.number="customSize" type="number" min="512" step="512" :placeholder="t('agent.swap.customPlaceholder')" class="flex-1" />
+            <span class="text-xs text-muted whitespace-nowrap">{{ t('agent.swap.mb') }}</span>
+          </div>
+
+          <p v-if="error" class="text-xs text-danger">{{ error }}</p>
+        </div>
+
+        <!-- 右栏:当前状态 -->
+        <div class="col-span-2 rounded-lg border border-border bg-surface/50 p-3 space-y-1.5 text-xs">
+          <div class="flex items-center justify-between">
+            <span class="text-muted">{{ t('agent.swap.status') }}</span>
+            <span :class="props.status?.enabled ? 'text-emerald-500' : 'text-muted'">
+              {{ props.status?.enabled ? t('agent.swap.on') : t('agent.swap.off') }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted">{{ t('agent.swap.path') }}</span>
+            <span class="font-mono">{{ props.status?.devices?.[0]?.path || '-' }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted">{{ t('agent.swap.total') }}</span>
+            <span>{{ fmtMB(props.status?.total || 0) }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted">{{ t('agent.swap.used') }}</span>
+            <span>{{ fmtMB(props.status?.used || 0) }}</span>
+          </div>
+        </div>
       </div>
 
-      <!-- 自定义大小(仅自定义时显示,最小 512MB) -->
-      <div v-if="selectedSize === null" class="flex items-center gap-2">
-        <Input v-model.number="customSize" type="number" min="512" step="512" :placeholder="t('agent.swap.customPlaceholder')" class="flex-1" />
-        <span class="text-xs text-muted whitespace-nowrap">{{ t('agent.swap.mb') }}</span>
-      </div>
-
-      <p v-if="error" class="text-xs text-danger">{{ error }}</p>
-
-      <DialogFooter class="justify-between">
-        <div class="flex items-center gap-2">
-          <!-- 删除 swap(仅已启用时显示;危险操作,二次确认后执行) -->
-          <Button v-if="props.status?.enabled" variant="destructive" size="sm" :disabled="busy" @click="onDelete">
-            {{ busy ? t('agent.swap.deleting') : t('agent.swap.delete') }}
-          </Button>
-        </div>
-        <div class="flex items-center gap-2">
-          <DialogClose as-child>
-            <Button variant="ghost" size="sm">{{ t('common.cancel') }}</Button>
-          </DialogClose>
-          <Button variant="brand" size="sm" :disabled="busy" @click="onApply">
-            <span v-if="busy" class="animate-spin mr-1.5 inline-block h-3 w-3 border-2 border-current border-t-transparent rounded-full" />
-            {{ busy ? t('agent.swap.applying') : t('agent.swap.apply') }}
-          </Button>
-        </div>
+      <DialogFooter>
+        <DialogClose as-child>
+          <Button variant="ghost" size="sm">{{ t('common.cancel') }}</Button>
+        </DialogClose>
+        <Button variant="brand" size="sm" :disabled="busy" @click="onApply">
+          <span v-if="busy" class="animate-spin mr-1.5 inline-block h-3 w-3 border-2 border-current border-t-transparent rounded-full" />
+          {{ busy ? t('agent.swap.applying') : t('agent.swap.apply') }}
+        </Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
@@ -65,14 +84,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { swapAction } from '@/api/agent'
 import { toastOk } from '@/toast'
-import { useConfirm } from '@/confirm'
 import type { SwapStatus } from '@/types'
 
 const props = defineProps<{ open: boolean; status: SwapStatus | null }>()
 const emit = defineEmits<{ (e: 'update:open', v: boolean): void; (e: 'updated'): void }>()
 
 const { t } = useI18n()
-const confirm = useConfirm()
 
 /** 预设(§13:禁止擅自增加 8G/16G/32G) */
 const presets = [
@@ -134,23 +151,7 @@ async function onApply() {
   }
 }
 
-/** 删除 swap(危险操作,项目确认弹窗二次确认;成功后父组件重查状态刷新卡片) */
-async function onDelete() {
-  const ok = await confirm(t('agent.swap.deleteConfirm'), { title: t('agent.swap.delete'), danger: true })
-  if (!ok) return
-  busy.value = true
-  error.value = ''
-  try {
-    await swapAction({ action: 'delete', confirm: true })
-    emit('update:open', false)
-    emit('updated')
-    toastOk(t('agent.swap.deleted'))
-  } catch (e) {
-    error.value = (e as Error).message
-  } finally {
-    busy.value = false
-  }
-}
+/** 删除 swap 入口已移到 Dashboard 卡片(设置图标后面) */
 
 function fmtMB(bytes: number): string {
   if (bytes >= 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024 / 1024).toFixed(1)} GB`
