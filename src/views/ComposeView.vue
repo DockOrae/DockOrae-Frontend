@@ -78,8 +78,8 @@
   </div>
 </template>
 
-<script setup>
-import { onMounted, reactive, ref } from 'vue'
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '../components/Icon.vue'
 import Modal from '../components/Modal.vue'
@@ -89,22 +89,26 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card } from '@/components/ui/card'
-import { api, composeStream } from '../api'
+import { api, deployCompose } from '../api'
 import { licenseActive } from '../store'
 import { useConfirm } from '../confirm'
 import { toastErr, toastOk } from '../toast'
+import { errorMessage } from '../util'
+import type { ComposeProject } from '../types'
 
 const { t } = useI18n()
-const stacks = ref([])
+const stacks = ref<ComposeProject[]>([])
 const createOpen = ref(false)
 const deploying = ref(false)
 const deployFailed = ref(false)
-const outputLines = ref([])
+const outputLines = ref<string[]>([])
+// 部署面板可见性(模板 v-if="deploying || output" 引用的 output;JS 版本漏定义)
+const output = computed(() => outputLines.value.length > 0)
 const form = reactive({ project: '', yaml: '' })
 const confirm = useConfirm()
 
 async function load() {
-  stacks.value = await api('/compose')
+  stacks.value = await api<ComposeProject[]>('/compose')
 }
 
 async function deploy() {
@@ -112,7 +116,7 @@ async function deploy() {
   deployFailed.value = false
   outputLines.value = []
   try {
-    await composeStream('/compose', { project: form.project, yaml: form.yaml }, (line) => {
+    await deployCompose({ project: form.project, yaml: form.yaml }, (line: string) => {
       outputLines.value.push(line)
     })
     toastOk(t('compose.toastDeployOk'))
@@ -122,24 +126,26 @@ async function deploy() {
     load()
   } catch (e) {
     deployFailed.value = true
-    outputLines.value.push(`❌ ${e.message}`)
-    toastErr(e.message)
+    outputLines.value.push(`❌ ${errorMessage(e)}`)
+    toastErr(errorMessage(e))
   } finally {
     deploying.value = false
   }
 }
 
-async function stackAct(s, action) {
+type StackAct = 'start' | 'stop' | 'restart'
+
+async function stackAct(s: ComposeProject, action: StackAct) {
   try {
     await api(`/compose/${s.project}/${action}`, { method: 'POST' })
     toastOk({ start: t('compose.toastStarted'), stop: t('compose.toastStopped'), restart: t('compose.toastRestarted') }[action])
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
-async function remove(s) {
+async function remove(s: ComposeProject) {
   const ok = await confirm(t('compose.confirmDelete', { project: s.project }), {
     title: t('compose.confirmDeleteTitle'),
     confirmText: t('common.delete'),
@@ -150,7 +156,7 @@ async function remove(s) {
     toastOk(t('common.deleted'))
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 

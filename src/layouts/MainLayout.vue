@@ -186,7 +186,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -195,8 +195,10 @@ import Icon from '../components/Icon.vue'
 import ToggleLocale from '../components/ToggleLocale.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import UpdateModal from '../components/UpdateModal.vue'
-import { getToken, setToken, api } from '../api'
+import { getToken, setToken, checkUpdate } from '../api'
 import { licenseActive, connectLicenseWS, disconnectLicenseWS, resetUser, user } from '../store'
+import type { IconName } from '../icons'
+import type { UpdateInfo } from '../types'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -205,10 +207,10 @@ const PINNED_KEY = 'dm_sidebar_pinned'
 
 // 在线更新:进入面板检查一次,之后每 10 分钟静默刷新(后端有 10 分钟缓存,不会打爆 GitHub API)
 const updateOpen = ref(false)
-const updateInfo = ref(null)
+const updateInfo = ref<UpdateInfo | null>(null)
 async function loadUpdate() {
   try {
-    updateInfo.value = await api('/update/check')
+    updateInfo.value = await checkUpdate()
   } catch { /* 网络/API 故障静默,不影响面板使用 */ }
 }
 onMounted(() => {
@@ -235,22 +237,28 @@ function togglePinned() {
   localStorage.setItem(PINNED_KEY, pinned.value ? 'true' : 'false')
 }
 
-function isActive(item) {
+function isActive(item: { to: string }) {
   if (item.to === '/') return route.path === '/'
   return route.path.startsWith(item.to)
 }
 
 // 从 JWT 解析用户名(登录后 /me 会刷新完整资料)
-const usernameFromToken = ref('')
+const usernameFromToken = ref<string>('')
 try {
   const payload = (getToken() || '').split('.')[1]
-  if (payload) usernameFromToken.value = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))).sub || ''
+  if (payload) usernameFromToken.value = (JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as { sub?: string }).sub || ''
 } catch { /* ignore */ }
 if (!user.username && usernameFromToken.value) {
   user.username = usernameFromToken.value
 }
 
-const navs = [
+interface NavItem {
+  to: string
+  labelKey: string
+  icon: IconName
+}
+
+const navs: NavItem[] = [
   { to: '/', labelKey: 'nav.systemStatus', icon: 'dashboard' },
   { to: '/apps', labelKey: 'nav.appStore', icon: 'store' },
   { to: '/containers', labelKey: 'nav.containers', icon: 'container' },
@@ -262,7 +270,13 @@ const navs = [
 
 // 面板设置子菜单(仿 3x-ui:常规/安全/TG/邮件/许可证/关于;证书与日期时间在常规页内横向 tab)
 // 图标各自独立:常规=调谐滑块、安全=锁、TG=小飞机、邮件=信封、许可证=钥匙、关于=信息
-const settingsSubs = [
+interface SettingsSubItem {
+  hash: string
+  labelKey: string
+  icon: IconName
+}
+
+const settingsSubs: SettingsSubItem[] = [
   { hash: '#general', labelKey: 'settings.general', icon: 'tune' },
   { hash: '#security', labelKey: 'settings.securitySettings', icon: 'lock' },
   { hash: '#telegram', labelKey: 'settings.telegramBot', icon: 'send' },
@@ -272,7 +286,7 @@ const settingsSubs = [
 ]
 
 // 设置页子页标题(header 标题跟随子选项名称:保存按钮上方的"设置"→ 当前子选项)
-const settingsTitleKeys = {
+const settingsTitleKeys: Record<string, string> = {
   '#general': 'settings.general',
   '#cert': 'settings.certificate',
   '#datetime': 'settings.dateTime',
@@ -282,17 +296,17 @@ const settingsTitleKeys = {
   '#license': 'license.title',
   '#about': 'settings.about',
 }
-const pageTitle = computed(() => {
+const pageTitle = computed<string>(() => {
   if (route.path === '/settings' && settingsTitleKeys[route.hash]) return t(settingsTitleKeys[route.hash])
-  return t(route.meta.title || '')
+  return t(String(route.meta.title || ''))
 })
 
 // 标签含英文(如 Compose 栈 / Telegram 机器人)时英文段单独放小,中文保持原字号
-function hasLatin(s) {
+function hasLatin(s: string): boolean {
   return /[A-Za-z]/.test(s || '')
 }
 // 把文本切成"英文段/非英文段",英文段渲染为 .latin(字号略小)
-function splitLatin(s) {
+function splitLatin(s: string): Array<{ seg: string; latin: boolean }> {
   return String(s || '')
     .split(/([A-Za-z0-9]+)/)
     .filter(Boolean)
@@ -322,10 +336,6 @@ function toggleSettingsMenu() {
     // 收起时若停留在子页,回到常规
     router.push('/settings#general')
   }
-}
-function isSecChild(key) {
-  if (route.path !== '/settings') return false
-  return route.hash === '#' + key
 }
 
 function logout() {

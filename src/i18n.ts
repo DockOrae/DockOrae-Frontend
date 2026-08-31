@@ -5,17 +5,26 @@ import en from './locales/en'
 
 const LANG_KEY = 'dm_lang'
 
+/** 语言定义 */
+export interface LangDef {
+  code: string
+  label: string
+  flag: string
+  rtl: boolean
+}
+
 /** 支持语言:简体中文 / 繁體中文 / English(顺序即语言菜单展示顺序) */
-export const LANGS = [
+export type LocaleCode = 'zh-CN' | 'zh-TW' | 'en'
+
+export const LANGS: LangDef[] = [
   { code: 'zh-CN', label: '简体中文', flag: '🇨🇳', rtl: false },
   { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼', rtl: false },
   { code: 'en', label: 'English', flag: '🇺🇸', rtl: false },
 ]
 
 const SUPPORTED = LANGS.map((l) => l.code)
-const DEFAULT_LANG = 'zh-CN'
 
-function applyDir(code) {
+function applyDir(code: string): void {
   const lang = LANGS.find((l) => l.code === code)
   if (lang && lang.rtl) {
     document.documentElement.dir = 'rtl'
@@ -24,9 +33,9 @@ function applyDir(code) {
   }
 }
 
-function loadLang() {
+function loadLang(): LocaleCode {
   const saved = localStorage.getItem(LANG_KEY)
-  if (saved && SUPPORTED.includes(saved)) return saved
+  if (saved && SUPPORTED.includes(saved)) return saved as LocaleCode
   const nav = (navigator.language || 'zh-CN').toLowerCase()
   if (nav.startsWith('zh-tw') || nav.startsWith('zh-hk')) return 'zh-TW'
   if (nav.startsWith('zh')) return 'zh-CN'
@@ -46,7 +55,7 @@ const i18n = createI18n({
 
 applyDir(i18n.global.locale.value)
 
-export function setLocale(code) {
+export function setLocale(code: LocaleCode): void {
   if (!SUPPORTED.includes(code)) return
   i18n.global.locale.value = code
   localStorage.setItem(LANG_KEY, code)
@@ -54,9 +63,13 @@ export function setLocale(code) {
   document.documentElement.lang = code
 }
 
-/** 全局翻译辅助(api.js / confirm.js 用) */
-export function t(key, params) {
-  return i18n.global.t(key, params)
+/**
+ * 全局翻译辅助(api.js / confirm.js 用)。
+ * 注意:消息未做 schema 类型约束 —— 项目多处使用动态 key(t('update.install_' + type)、
+ * t('appStore.hint_' + hint) 等兜底模式),严格 key 类型会破坏这些既有设计。
+ */
+export function t(key: string, params?: Record<string, unknown>): string {
+  return params ? i18n.global.t(key, params) : i18n.global.t(key)
 }
 
 /** 切换语言(ToggleLocale 用;setLang 为旧别名,保持兼容) */

@@ -27,20 +27,21 @@
   </DropdownMenu>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from './Icon.vue'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { LANGS, setLang } from '../i18n'
+import type { LocaleCode } from '../i18n'
 
 const { t, locale } = useI18n()
 
 const current = computed(() => LANGS.find((l) => l.code === locale.value) || LANGS[0])
 
-function onPick(code) {
-  setLang(code)
+function onPick(code: string) {
+  setLang(code as LocaleCode)
 }
 </script>
 

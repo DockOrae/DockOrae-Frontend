@@ -27,7 +27,7 @@
   </AlertDialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -47,7 +47,7 @@ function onActionClick() {
 }
 
 // ESC / 点击遮罩 / 取消按钮 → reka 触发 update:open=false → 统一 resolve(false)
-function onOpenChange(v) {
+function onOpenChange(v: boolean) {
   if (!v && !confirmState._resolved) resolveConfirm(false)
 }
 </script>

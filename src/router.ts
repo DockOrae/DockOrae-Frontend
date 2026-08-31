@@ -1,7 +1,15 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { getToken, getPublicConfig } from './api'
 
-const routes = [
+// 路由 meta 扩展:public = 无需登录;title = 页面标题 i18n key
+declare module 'vue-router' {
+  interface RouteMeta {
+    public?: boolean
+    title?: string
+  }
+}
+
+const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: () => import('./views/LoginView.vue'), meta: { public: true } },
   // 字体验收页(开发用,不在导航中,可直接访问 /typography)
   { path: '/typography', name: 'typography', component: () => import('./views/TypographyView.vue'), meta: { public: true } },

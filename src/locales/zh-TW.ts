@@ -30,6 +30,7 @@ export default {
     deleted: '已刪除',
     copy: '複製',
     copied: '已複製',
+    done: '完成',
   },
   nav: {
     appStore: '應用商店',
@@ -95,14 +96,6 @@ export default {
     getKeyFirst: '請先取得綁定金鑰',
     codeWrong: '驗證碼錯誤，請重試',
     notEnabled: '雙重驗證未啟用',
-  },
-  compose: {
-    nameInvalid: '專案名稱只能包含英文字母、數字、底線、連字號（1-64 位）',
-    binaryMissing: '無法執行 docker-compose（映像檔內未內建 compose？）',
-    binaryMissingDetail: '無法執行 docker-compose',
-    failed: 'docker-compose 執行失敗，請檢查上方輸出',
-    notManaged: '此專案不在本面板的管理範圍內',
-    logsFailed: '無法啟動 docker-compose logs',
   },
   container: {
     imageEmpty: '映像檔不能為空',
@@ -178,6 +171,17 @@ export default {
     deviceBound: '此裝置已綁定其他授權',
     fileRequired: '請選擇授權檔案',
     json: '授權資料無效',
+unbindConfirm: '確認解綁',
+unbindConfirmDesc: '解綁後本機將不再使用該 License,但 Key 不會被吊銷,可在其他裝置重新啟用。',
+unboundToast: '已解綁',
+toastActivated: '啟用成功',
+toastDeactivated: '已解綁',
+adminUnboundTitle: '授權已被管理員解綁',
+adminUnboundDesc: '該 License 已被授權伺服器管理員解綁,請重新啟用。',
+keyKept: '已保留 Key,可直接重新啟用',
+reactivate: '重新啟用',
+revokedDesc: '該 License 已被吊銷,無法繼續使用。',
+unboundDesc: '本機已解綁,Key 保留,可重新啟用。',
     notActivated: '未啟用',
   },
   theme: {
@@ -347,6 +351,12 @@ export default {
     toastRestarted: '已重新啟動',
     toastDeployOk: '部署成功',
     deployFailed: '部署失敗，請查看上方輸出',
+    nameInvalid: '專案名稱只能包含英文字母、數字、底線、連字號（1-64 位）',
+    binaryMissing: '無法執行 docker-compose（映像檔內未內建 compose？）',
+    binaryMissingDetail: '無法執行 docker-compose',
+    failed: 'docker-compose 執行失敗，請檢查上方輸出',
+    notManaged: '此專案不在本面板的管理範圍內',
+    logsFailed: '無法啟動 docker-compose logs'
   },
   composeDetail: {
     title: 'Compose 詳情',
@@ -579,6 +589,9 @@ export default {
     saveNeedRestart: '已儲存，重新啟動面板後生效',
     saveOk: '已儲存',
     json: '設定資料無效',
+    unitMinutes: '分鐘',
+    unitHours: '小時',
+    unitDays: '天',
   },
   overview: {
     portBindings: '連接埠綁定',

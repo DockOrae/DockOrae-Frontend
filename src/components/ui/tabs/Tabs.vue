@@ -1,27 +1,19 @@
-<script setup>
-import { reactiveOmit } from "@vueuse/core";
-import { TabsRoot, useForwardPropsEmits } from "reka-ui";
-import { cn } from "@/lib/utils";
+<script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
+import { reactiveOmit } from "@vueuse/core"
+import { cn } from "@/lib/utils"
+import { TabsRoot, useForwardPropsEmits, type TabsRootProps, type TabsRootEmits } from "reka-ui"
 
-const props = defineProps({
-  defaultValue: { type: null, required: false },
-  orientation: { type: String, required: false },
-  dir: { type: String, required: false },
-  activationMode: { type: String, required: false },
-  modelValue: { type: null, required: false },
-  unmountOnHide: { type: Boolean, required: false },
-  asChild: { type: Boolean, required: false },
-  as: { type: null, required: false },
-  class: {
-    type: [Boolean, null, String, Object, Array],
-    required: false,
-    skipCheck: true,
-  },
-});
-const emits = defineEmits(["update:modelValue"]);
+interface Props extends TabsRootProps {
+  class?: HTMLAttributes['class']
+}
 
-const delegatedProps = reactiveOmit(props, "class");
-const forwarded = useForwardPropsEmits(delegatedProps, emits);
+const props = defineProps<Props>()
+
+const emits = defineEmits<TabsRootEmits>()
+
+const delegatedProps = reactiveOmit(props, "class")
+const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
 <template>

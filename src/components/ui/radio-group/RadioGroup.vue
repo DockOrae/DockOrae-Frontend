@@ -1,30 +1,19 @@
-<script setup>
-import { reactiveOmit } from "@vueuse/core";
-import { RadioGroupRoot, useForwardPropsEmits } from "reka-ui";
-import { cn } from "@/lib/utils";
+<script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
+import { reactiveOmit } from "@vueuse/core"
+import { cn } from "@/lib/utils"
+import { RadioGroupRoot, useForwardPropsEmits, type RadioGroupRootProps, type RadioGroupRootEmits } from "reka-ui"
 
-const props = defineProps({
-  modelValue: { type: null, required: false },
-  defaultValue: { type: null, required: false },
-  disabled: { type: Boolean, required: false },
-  orientation: { type: String, required: false },
-  dir: { type: String, required: false },
-  loop: { type: Boolean, required: false },
-  asChild: { type: Boolean, required: false },
-  as: { type: null, required: false },
-  name: { type: String, required: false },
-  required: { type: Boolean, required: false },
-  class: {
-    type: [Boolean, null, String, Object, Array],
-    required: false,
-    skipCheck: true,
-  },
-});
-const emits = defineEmits(["update:modelValue"]);
+interface Props extends RadioGroupRootProps {
+  class?: HTMLAttributes['class']
+}
 
-const delegatedProps = reactiveOmit(props, "class");
+const props = defineProps<Props>()
 
-const forwarded = useForwardPropsEmits(delegatedProps, emits);
+const emits = defineEmits<RadioGroupRootEmits>()
+
+const delegatedProps = reactiveOmit(props, "class")
+const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
 <template>

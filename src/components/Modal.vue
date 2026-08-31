@@ -19,22 +19,28 @@
   </Dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import Icon from './Icon.vue'
 
-const props = defineProps({
-  modelValue: Boolean,
-  title: { type: String, default: '' },
-  size: { type: String, default: 'lg' }, // lg | xl | 2xl
-})
-const emit = defineEmits(['close', 'update:modelValue'])
+const props = withDefaults(
+  defineProps<{
+    modelValue?: boolean
+    title?: string
+    size?: 'lg' | 'xl' | '2xl' // lg | xl | 2xl
+  }>(),
+  {
+    title: '',
+    size: 'lg',
+  },
+)
+const emit = defineEmits<{ close: []; 'update:modelValue': [v: boolean] }>()
 
 const sizeClass = computed(() => ({ lg: '', xl: 'sm:max-w-xl', '2xl': 'sm:max-w-2xl' }[props.size] || ''))
 
-function onOpenChange(v) {
+function onOpenChange(v: boolean) {
   emit('update:modelValue', v)
   if (!v) emit('close')
 }

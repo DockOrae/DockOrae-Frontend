@@ -1,55 +1,23 @@
-<script setup>
-import { reactiveOmit } from "@vueuse/core";
-import { PopoverContent, PopoverPortal, useForwardPropsEmits } from "reka-ui";
-import { cn } from "@/lib/utils";
+<script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
+import { reactiveOmit } from "@vueuse/core"
+import { cn } from "@/lib/utils"
+import { PopoverContent, PopoverPortal, useForwardPropsEmits, type PopoverContentProps, type PopoverContentEmits } from "reka-ui"
 
 defineOptions({
   inheritAttrs: false,
-});
+})
 
-const props = defineProps({
-  forceMount: { type: Boolean, required: false },
-  memoDependencies: { type: Array, required: false },
-  side: { type: null, required: false },
-  sideOffset: { type: Number, required: false, default: 4 },
-  sideFlip: { type: Boolean, required: false },
-  align: { type: null, required: false, default: "center" },
-  alignOffset: { type: Number, required: false },
-  alignFlip: { type: Boolean, required: false },
-  avoidCollisions: { type: Boolean, required: false },
-  collisionBoundary: { type: null, required: false },
-  collisionPadding: { type: [Number, Object], required: false },
-  arrowPadding: { type: Number, required: false },
-  hideShiftedArrow: { type: Boolean, required: false },
-  sticky: { type: String, required: false },
-  hideWhenDetached: { type: Boolean, required: false },
-  positionStrategy: { type: String, required: false },
-  updatePositionStrategy: { type: String, required: false },
-  disableUpdateOnLayoutShift: { type: Boolean, required: false },
-  prioritizePosition: { type: Boolean, required: false },
-  reference: { type: null, required: false },
-  dir: { type: String, required: false },
-  asChild: { type: Boolean, required: false },
-  as: { type: null, required: false },
-  disableOutsidePointerEvents: { type: Boolean, required: false },
-  class: {
-    type: [Boolean, null, String, Object, Array],
-    required: false,
-    skipCheck: true,
-  },
-});
-const emits = defineEmits([
-  "escapeKeyDown",
-  "pointerDownOutside",
-  "focusOutside",
-  "interactOutside",
-  "openAutoFocus",
-  "closeAutoFocus",
-]);
+interface Props extends PopoverContentProps {
+  class?: HTMLAttributes['class']
+}
 
-const delegatedProps = reactiveOmit(props, "class");
+const props = withDefaults(defineProps<Props>(), { sideOffset: 4, align: 'center' })
 
-const forwarded = useForwardPropsEmits(delegatedProps, emits);
+const emits = defineEmits<PopoverContentEmits>()
+
+const delegatedProps = reactiveOmit(props, "class")
+const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
 <template>

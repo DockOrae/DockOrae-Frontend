@@ -2,8 +2,8 @@
   <LogViewer :stream="`/containers/${id}/logs`" follow />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import LogViewer from '../../components/LogViewer.vue'
 
-defineProps({ id: { type: String, required: true } })
+defineProps<{ id: string }>()
 </script>

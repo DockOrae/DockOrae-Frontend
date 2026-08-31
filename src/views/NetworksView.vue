@@ -82,7 +82,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '../components/Icon.vue'
@@ -95,29 +95,38 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api } from '../api'
+import { errorMessage } from '../util'
 import { useConfirm } from '../confirm'
 import { toastErr, toastOk } from '../toast'
+import type { CreateNetworkReq, NetworkListItem } from '../types'
 
 const { t } = useI18n()
-const networks = ref([])
+const networks = ref<NetworkListItem[]>([])
 const createOpen = ref(false)
 const error = ref('')
 const form = reactive({ name: '', driver: 'bridge', subnet: '', gateway: '', internal: false })
 const confirm = useConfirm()
 
-const subnet = (n) => n.IPAM?.Config?.[0]?.Subnet || '-'
-const gateway = (n) => n.IPAM?.Config?.[0]?.Gateway || '-'
+const subnet = (n: NetworkListItem) => n.IPAM?.Config?.[0]?.Subnet || '-'
+const gateway = (n: NetworkListItem) => n.IPAM?.Config?.[0]?.Gateway || '-'
 
 async function load() {
-  networks.value = await api('/networks')
+  networks.value = await api<NetworkListItem[]>('/networks')
 }
 
 async function create() {
   error.value = ''
+  const payload: CreateNetworkReq = {
+    name: form.name,
+    driver: form.driver,
+    subnet: form.subnet || null,
+    gateway: form.gateway || null,
+    internal: form.internal,
+  }
   try {
     await api('/networks', {
       method: 'POST',
-      json: { name: form.name, driver: form.driver, subnet: form.subnet || null, gateway: form.gateway || null, internal: form.internal },
+      json: payload,
     })
     toastOk(t('networks.toastCreated'))
     createOpen.value = false
@@ -127,11 +136,11 @@ async function create() {
     form.internal = false
     load()
   } catch (e) {
-    error.value = e.message
+    error.value = errorMessage(e)
   }
 }
 
-async function remove(n) {
+async function remove(n: NetworkListItem) {
   const ok = await confirm(t('networks.confirmDelete', { name: n.Name }), {
     title: t('networks.confirmDeleteTitle'),
     confirmText: t('common.delete'),
@@ -142,7 +151,7 @@ async function remove(n) {
     toastOk(t('common.deleted'))
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 

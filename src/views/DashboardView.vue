@@ -326,7 +326,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import MiniChart from '../components/MiniChart.vue'
@@ -336,41 +336,51 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api, getToken, entrancePath } from '../api'
-import { formatBytes } from '../util'
+import { errorMessage, formatBytes } from '../util'
 import { toastErr, toastOk } from '../toast'
 import { useConfirm } from '../confirm'
 import { licenseActive } from '../store'
+import type { IconName } from '../icons'
+import type {
+  ContainerListItem,
+  HostInfo,
+  ImageListItem,
+  MonitorSnapshot,
+  OkResponse,
+  PanelLogsResponse,
+  VolumeListItem,
+} from '../types'
 
 const { t } = useI18n()
 const askConfirm = useConfirm()
 
 // ---------- 基础数据 ----------
-const containers = ref([])
+const containers = ref<ContainerListItem[]>([])
 const images = ref(0)
 const imagesSize = ref(0)
 const volumes = ref(0)
 const mountedVolumes = ref(0)
-const host = ref(null)
+const host = ref<HostInfo | null>(null)
 const dockerOk = ref(false)
 const dockerVersion = computed(() => (host.value?.docker_version ? 'v' + host.value.docker_version : '?'))
 
 // ---------- 监控 ----------
-const mon = ref({ cpu_pct: 0, mem: null, load: null, swap: null, disk: null, panel: null, publicIP: null, net: { rx: 0, tx: 0 }, io: { read: 0, write: 0 } })
-const netHistory = ref({ rx: [], tx: [] }) // 速率序列(B/s)
-const ioHistory = ref({ read: [], write: [] }) // 速率序列(B/s)
-const hist = ref({ cpu: [], mem: [], swap: [], disk: [], containerCount: [], imageCount: [], volumeCount: [] })
-const labels = ref([]) // 3s 采样时间标签(吞吐/IO)
-const dockerLabels = ref([]) // 15s 采样时间标签(容器/镜像/卷)
-const netRate = ref({ rx: '0 B/s', tx: '0 B/s' })
-const ioRate = ref({ read: '0 B/s', write: '0 B/s' })
-let monTimer = null
-let dockerTimer = null
-let clockTimer = null
+const mon = ref<MonitorSnapshot>({ cpu_pct: 0, mem: null, load: null, swap: null, disk: null, panel: null, publicIP: null, net: null, io: null })
+const netHistory = ref<{ rx: number[]; tx: number[] }>({ rx: [], tx: [] }) // 速率序列(B/s)
+const ioHistory = ref<{ read: number[]; write: number[] }>({ read: [], write: [] }) // 速率序列(B/s)
+const hist = ref<{ cpu: number[]; mem: number[]; swap: number[]; disk: number[]; containerCount: number[]; imageCount: number[]; volumeCount: number[] }>({ cpu: [], mem: [], swap: [], disk: [], containerCount: [], imageCount: [], volumeCount: [] })
+const labels = ref<string[]>([]) // 3s 采样时间标签(吞吐/IO)
+const dockerLabels = ref<string[]>([]) // 15s 采样时间标签(容器/镜像/卷)
+const netRate = ref<{ rx: string; tx: string }>({ rx: '0 B/s', tx: '0 B/s' })
+const ioRate = ref<{ read: string; write: string }>({ read: '0 B/s', write: '0 B/s' })
+let monTimer: ReturnType<typeof setInterval> | null = null
+let dockerTimer: ReturnType<typeof setInterval> | null = null
+let clockTimer: ReturnType<typeof setInterval> | null = null
 
-let timeOffset = 0
+let timeOffset: number = 0
 const serverTimeText = ref('-')
 
-const counts = computed(() => ({
+const counts = computed<{ total: number; running: number; images: number; volumes: number }>(() => ({
   total: containers.value.length,
   running: containers.value.filter((c) => c.State === 'running').length,
   images: images.value,
@@ -388,7 +398,6 @@ const memSub = computed(() => {
   const m = mon.value.mem
   return m ? `${fmtBytes(m.used)} / ${fmtBytes(m.total)}` : '-'
 })
-const memUsedText = computed(() => (mon.value.mem ? `${fmtBytes(mon.value.mem.used)} / ${fmtBytes(mon.value.mem.total)}` : '-'))
 const diskPct = computed(() => mon.value.disk?.pct ?? 0)
 const diskSub = computed(() => {
   const d = mon.value.disk
@@ -413,7 +422,6 @@ const uptimeText = computed(() => {
   return `${m}${t('time.minShort')}`
 })
 const imageSizeText = computed(() => fmtBytes(imagesSize.value))
-const imageAvgText = computed(() => (images.value ? fmtBytes(imagesSize.value / images.value) : '-'))
 const panelMem = computed(() => (mon.value.panel ? fmtBytes(mon.value.panel.mem) : '-'))
 const panelThreads = computed(() => (mon.value.panel ? String(mon.value.panel.threads) : '-'))
 const sentTotal = computed(() => fmtBytes(mon.value.net?.tx_total ?? 0))
@@ -424,7 +432,18 @@ const netPeakText = computed(() => fmtRate(peak(netHistory.value.tx) > peak(netH
 const ioPeakText = computed(() => fmtRate(Math.max(peak(ioHistory.value.read), peak(ioHistory.value.write))))
 
 // ---------- 四张状态卡(仿 3x-ui VitalTile) ----------
-const vitals = computed(() => [
+interface VitalsItem {
+  icon: IconName
+  label: string
+  percent: number
+  color: string
+  detail: string
+  data: number[]
+  footLeft: string
+  footRight: string
+}
+
+const vitals = computed<VitalsItem[]>(() => [
   {
     icon: 'cpu', label: t('dashboard.cpuUsage'), percent: mon.value.cpu_pct, color: '#ec4899',
     detail: cpuSub.value, data: hist.value.cpu,
@@ -452,7 +471,7 @@ const vitals = computed(() => [
 ])
 
 // 均值参考线(仿 3x-ui VitalTile referenceLines)
-function meanRef(data, color) {
+function meanRef(data: number[], _color: string) {
   if (data.length < 2) return []
   return [{ y: avg(data), dash: '3 4', color: 'color-mix(in srgb, var(--dm-muted) 55%, transparent)' }]
 }
@@ -483,12 +502,11 @@ const health = computed(() => {
   return null
 })
 
-const fmtBytes = (n) => formatBytes(n, 1)
-const fmtRate = (v) => (v == null ? '-' : formatBytes(v, 1) + '/s')
-const fmtInt = (v) => Math.round(v).toLocaleString()
-const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0)
-const peak = (arr) => (arr.length ? Math.max(...arr) : 0)
-function parseRate(s) {
+const fmtBytes = (n: number | null | undefined): string => formatBytes(n, 1)
+const fmtRate = (v: number | null | undefined): string => (v == null ? '-' : formatBytes(v, 1) + '/s')
+const avg = (arr: number[]): number => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0)
+const peak = (arr: number[]) => (arr.length ? Math.max(...arr) : 0)
+function parseRate(s: string) {
   const m = String(s).match(/^([\d.]+)/)
   const unit = String(s).match(/([KMG]?B)\/s$/)
   if (!m) return 0
@@ -499,7 +517,7 @@ function parseRate(s) {
 // ---------- 加载 ----------
 async function loadBase() {
   try {
-    const [cs, imgs, vols] = await Promise.all([api('/containers'), api('/images'), api('/volumes')])
+    const [cs, imgs, vols] = await Promise.all([api<ContainerListItem[]>('/containers'), api<ImageListItem[]>('/images'), api<VolumeListItem[]>('/volumes')])
     dockerOk.value = true
     containers.value = cs
     images.value = imgs.length
@@ -510,7 +528,7 @@ async function loadBase() {
     )).size
     if (!host.value) {
       try {
-        const h = await api('/system/host')
+        const h = await api<HostInfo>('/system/host')
         host.value = h
         if (h.server_time) timeOffset = h.server_time * 1000 - Date.now()
       } catch { /* ignore */ }
@@ -527,7 +545,7 @@ async function loadBase() {
 
 async function loadMonitor() {
   try {
-    const m = await api('/system/monitor')
+    const m = await api<MonitorSnapshot>('/system/monitor')
     // 速率由后端 8 秒采样差分直接给出(B/s),前端不再做累计值差分(避免缓存导致的 0 锯齿)
     const rx = m.net?.rx_rate ?? 0
     const tx = m.net?.tx_rate ?? 0
@@ -551,11 +569,11 @@ async function loadMonitor() {
   } catch { /* ignore */ }
 }
 
-function pushHistory(arr, v) {
+function pushHistory(arr: number[], v: number) {
   arr.push(v)
   if (arr.length > 120) arr.shift()
 }
-function pushLabel(arr) {
+function pushLabel(arr: string[]) {
   arr.push(new Date(Date.now() + timeOffset).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
   if (arr.length > 120) arr.shift()
 }
@@ -576,12 +594,12 @@ const logsText = ref('')
 const logRows = ref('50')
 const logAuto = ref(false)
 const logLoading = ref(false)
-let logTimer = null
+let logTimer: ReturnType<typeof setInterval> | null = null
 const configOpen = ref(false)
 const configText = ref('')
 const backupOpen = ref(false)
 const historyOpen = ref(false)
-const backupInput = ref(null)
+const backupInput = ref<HTMLInputElement | null>(null)
 
 function openLogs() {
   logsOpen.value = true
@@ -590,10 +608,10 @@ function openLogs() {
 async function loadLogs() {
   logLoading.value = true
   try {
-    const r = await api('/system/logs?lines=' + logRows.value)
+    const r = await api<PanelLogsResponse>('/system/logs?lines=' + logRows.value)
     logsText.value = (r.logs || []).join('\n') || '-'
   } catch (e) {
-    logsText.value = e.message
+    logsText.value = errorMessage(e)
   } finally {
     logLoading.value = false
   }
@@ -608,25 +626,25 @@ function downloadLogs() {
   URL.revokeObjectURL(url)
 }
 watch(logAuto, (v) => {
-  clearInterval(logTimer)
+  if (logTimer) clearInterval(logTimer)
   if (v && logsOpen.value) {
     logTimer = setInterval(loadLogs, 5000)
   }
 })
 watch(logsOpen, (v) => {
   if (!v) {
-    clearInterval(logTimer)
+    if (logTimer) clearInterval(logTimer)
     logAuto.value = false
   }
 })
 
 function openConfig() {
   configOpen.value = true
-  api('/system/config')
+  api<string | Record<string, unknown>>('/system/config')
     .then((r) => {
-      configText.value = typeof r === 'string' ? r : JSON.stringify(r, null, 2)
+      configText.value = typeof r === 'string' ? r : (JSON.stringify(r, null, 2) ?? '')
     })
-    .catch((e) => (configText.value = e.message))
+    .catch((e) => (configText.value = errorMessage(e)))
 }
 function copyConfig() {
   navigator.clipboard?.writeText(configText.value).then(() => toastOk(t('common.copied'))).catch(() => {})
@@ -658,23 +676,23 @@ async function downloadBackup() {
     a.click()
     URL.revokeObjectURL(url)
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
-async function restoreBackup(ev) {
-  const file = ev.target.files?.[0]
-  ev.target.value = ''
+async function restoreBackup(ev: Event) {
+  const file = (ev.target as HTMLInputElement).files?.[0]
+  ;(ev.target as HTMLInputElement).value = ''
   if (!file) return
   const ok = await askConfirm(t('status.restoreConfirm'), { title: t('status.restore'), danger: true, confirmText: t('status.restore') })
   if (!ok) return
   const fd = new FormData()
   fd.append('file', file)
   try {
-    const r = await api('/system/restore', { method: 'POST', body: fd })
+    const r = await api<OkResponse>('/system/restore', { method: 'POST', body: fd })
     toastOk(t('status.restored'))
     if (r.needRestart) setTimeout(panelRestart, 1500)
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
@@ -683,21 +701,37 @@ function openHistory() {
 }
 
 const historyTab = ref('cpu')
-const historyTabs = [
+interface HistoryTab {
+  key: string
+  icon: IconName
+  labelKey: string
+}
+const historyTabs: HistoryTab[] = [
   { key: 'cpu', icon: 'cpu', labelKey: 'dashboard.cpuUsage' },
   { key: 'mem', icon: 'memory', labelKey: 'dashboard.memUsage' },
   { key: 'net', icon: 'network', labelKey: 'dashboard.network' },
   { key: 'io', icon: 'drive', labelKey: 'dashboard.io' },
   { key: 'disk', icon: 'stats', labelKey: 'dashboard.storage' },
 ]
-const historyChart = computed(() => {
+interface HistoryChartConfig {
+  title: string
+  current: string
+  s1: number[]
+  s2: number[]
+  color1: string
+  color2: string
+  fmt: (v: number) => string
+  valueMax: number | null
+  refLines: Array<{ y: number; color?: string; dash?: string }>
+}
+const historyChart = computed<HistoryChartConfig>(() => {
   switch (historyTab.value) {
     case 'mem':
       return {
         title: `${t('dashboard.memUsage')} / ${t('dashboard.swap')}`,
         current: `${memPct.value.toFixed(1)}% / ${swapPct.value.toFixed(1)}%`,
         s1: hist.value.mem, s2: hist.value.swap, color1: '#a78bfa', color2: '#fbbf24',
-        fmt: (v) => v.toFixed(1) + '%', valueMax: 100,
+        fmt: (v: number) => v.toFixed(1) + '%', valueMax: 100,
         refLines: meanRef(hist.value.mem, '#a78bfa'),
       }
     case 'net':
@@ -721,7 +755,7 @@ const historyChart = computed(() => {
         title: t('dashboard.storage'),
         current: `${diskPct.value.toFixed(1)}%`,
         s1: hist.value.disk, s2: [], color1: '#34d399', color2: '',
-        fmt: (v) => v.toFixed(1) + '%', valueMax: 100,
+        fmt: (v: number) => v.toFixed(1) + '%', valueMax: 100,
         refLines: meanRef(hist.value.disk, '#34d399'),
       }
     default:
@@ -729,7 +763,7 @@ const historyChart = computed(() => {
         title: t('dashboard.cpuUsage'),
         current: `${(mon.value.cpu_pct ?? 0).toFixed(1)}%`,
         s1: hist.value.cpu, s2: [], color1: '#ec4899', color2: '',
-        fmt: (v) => v.toFixed(1) + '%', valueMax: 100,
+        fmt: (v: number) => v.toFixed(1) + '%', valueMax: 100,
         refLines: meanRef(hist.value.cpu, '#ec4899'),
       }
   }
@@ -740,7 +774,7 @@ async function panelRestart() {
   if (!ok) return
   api('/system/restart', { method: 'POST' })
     .then(() => toastOk(t('status.restarting')))
-    .catch((e) => toastErr(e.message))
+    .catch((e) => toastErr(errorMessage(e)))
 }
 
 // ---------- 定时器 ----------
@@ -760,18 +794,18 @@ onActivated(() => {
   if (!monTimer) startTimers()
 })
 onDeactivated(() => {
-  clearInterval(monTimer)
+  if (monTimer) clearInterval(monTimer)
   monTimer = null
-  clearInterval(dockerTimer)
+  if (dockerTimer) clearInterval(dockerTimer)
   dockerTimer = null
-  clearInterval(clockTimer)
+  if (clockTimer) clearInterval(clockTimer)
   clockTimer = null
 })
 onBeforeUnmount(() => {
-  clearInterval(monTimer)
-  clearInterval(dockerTimer)
-  clearInterval(clockTimer)
-  clearInterval(logTimer)
+  if (monTimer) clearInterval(monTimer)
+  if (dockerTimer) clearInterval(dockerTimer)
+  if (clockTimer) clearInterval(clockTimer)
+  if (logTimer) clearInterval(logTimer)
 })
 </script>
 

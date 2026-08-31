@@ -77,7 +77,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '../components/Icon.vue'
@@ -88,12 +88,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api } from '../api'
-import { containerName, humanPorts, formatDate } from '../util'
+import { containerName, errorMessage, formatDate, humanPorts } from '../util'
 import { useConfirm } from '../confirm'
 import { toastErr, toastOk } from '../toast'
+import type { ContainerListItem } from '../types'
 
 const { t } = useI18n()
-const containers = ref([])
+const containers = ref<ContainerListItem[]>([])
 const keyword = ref('')
 const stateFilter = ref('')
 const confirm = useConfirm()
@@ -109,21 +110,14 @@ const filtered = computed(() => {
 })
 
 async function load() {
-  containers.value = await api('/containers')
+  containers.value = await api<ContainerListItem[]>('/containers')
 }
-const name = (c) => containerName(c)
-const ports = (c) => humanPorts(c.Ports)
+const name = (c: ContainerListItem) => containerName(c)
+const ports = (c: ContainerListItem) => humanPorts(c.Ports)
 
-async function act(c, action) {
-  try {
-    await api(`/containers/${c.Id}/${action}`, { method: 'POST' })
-    toastOk(actionMap[action])
-  } catch (e) {
-    toastErr(e.message)
-  }
-}
+type ContainerAct = 'start' | 'stop' | 'restart' | 'pause' | 'unpause'
 
-const actionMap = {
+const actionMap: Record<ContainerAct, () => string> = {
   start: () => t('containers.toastStarted'),
   stop: () => t('containers.toastStopped'),
   restart: () => t('containers.toastRestarted'),
@@ -131,7 +125,16 @@ const actionMap = {
   unpause: () => t('containers.toastResumed'),
 }
 
-async function remove(c) {
+async function act(c: ContainerListItem, action: ContainerAct) {
+  try {
+    await api(`/containers/${c.Id}/${action}`, { method: 'POST' })
+    toastOk(actionMap[action]())
+  } catch (e) {
+    toastErr(errorMessage(e))
+  }
+}
+
+async function remove(c: ContainerListItem) {
   const ok = await confirm(t('containers.confirmDelete', { name: name(c) }), {
     title: t('containers.confirmDeleteTitle'),
     confirmText: t('common.delete'),
@@ -142,7 +145,7 @@ async function remove(c) {
     toastOk(t('common.deleted'))
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 

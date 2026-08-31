@@ -1,45 +1,23 @@
-<script setup>
-import { reactiveOmit } from "@vueuse/core";
-import {
-  TooltipArrow,
-  TooltipContent,
-  TooltipPortal,
-  useForwardPropsEmits,
-} from "reka-ui";
-import { cn } from "@/lib/utils";
+<script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
+import { reactiveOmit } from "@vueuse/core"
+import { cn } from "@/lib/utils"
+import { TooltipArrow, TooltipContent, TooltipPortal, useForwardPropsEmits, type TooltipContentProps, type TooltipContentEmits } from "reka-ui"
 
 defineOptions({
   inheritAttrs: false,
-});
+})
 
-const props = defineProps({
-  forceMount: { type: Boolean, required: false },
-  ariaLabel: { type: String, required: false },
-  asChild: { type: Boolean, required: false },
-  as: { type: null, required: false },
-  side: { type: null, required: false },
-  sideOffset: { type: Number, required: false, default: 4 },
-  align: { type: null, required: false },
-  alignOffset: { type: Number, required: false },
-  avoidCollisions: { type: Boolean, required: false },
-  collisionBoundary: { type: null, required: false },
-  collisionPadding: { type: [Number, Object], required: false },
-  arrowPadding: { type: Number, required: false },
-  sticky: { type: String, required: false },
-  hideWhenDetached: { type: Boolean, required: false },
-  positionStrategy: { type: String, required: false },
-  updatePositionStrategy: { type: String, required: false },
-  class: {
-    type: [Boolean, null, String, Object, Array],
-    required: false,
-    skipCheck: true,
-  },
-});
+interface Props extends TooltipContentProps {
+  class?: HTMLAttributes['class']
+}
 
-const emits = defineEmits(["escapeKeyDown", "pointerDownOutside"]);
+const props = withDefaults(defineProps<Props>(), { sideOffset: 4 })
 
-const delegatedProps = reactiveOmit(props, "class");
-const forwarded = useForwardPropsEmits(delegatedProps, emits);
+const emits = defineEmits<TooltipContentEmits>()
+
+const delegatedProps = reactiveOmit(props, "class")
+const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
 <template>

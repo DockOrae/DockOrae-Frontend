@@ -107,10 +107,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 
-const fontStatus = ref([
+const fontStatus = ref<Array<{ name: string; ok: boolean }>>([
   { name: 'BlueCustard', ok: false },
   { name: 'YuanQI', ok: false },
 ])

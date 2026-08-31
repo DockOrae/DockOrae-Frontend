@@ -17,14 +17,15 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 
-defineProps({
-  tabs: { type: Array, required: true }, // [{key, labelKey}]
-  active: { type: String, default: '' },
-})
-defineEmits(['update:active'])
+// [{key, labelKey}]
+defineProps<{
+  tabs: Array<{ key: string; labelKey: string }>
+  active?: string
+}>()
+defineEmits<{ 'update:active': [key: string] }>()
 
 const { t } = useI18n()
 </script>

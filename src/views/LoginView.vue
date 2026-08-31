@@ -87,7 +87,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -98,10 +98,11 @@ import { api, setToken } from '../api'
 import { toastErr, toastOk } from '../toast'
 import { applyUser } from '../store'
 import { isDark } from '../store'
+import type { DefaultAccountResponse, LoginResponse, LoginTotpResponse } from '../types'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const router = useRouter()
-const form = reactive({ username: 'admin', password: '' })
+const form = reactive<{ username: string; password: string }>({ username: 'admin', password: '' })
 const loading = ref(false)
 const error = ref('')
 const showPw = ref(false)
@@ -123,7 +124,7 @@ setInterval(() => {
 }, 2000)
 
 onMounted(() => {
-  api('/system/default-account')
+  api<DefaultAccountResponse>('/system/default-account')
     .then((r) => (showDefaultHint.value = !!r.show))
     .catch(() => (showDefaultHint.value = false))
 })
@@ -135,19 +136,19 @@ async function doLogin() {
   loading.value = true
   error.value = ''
   try {
-    const r = await api('/login', { method: 'POST', json: form })
+    const r = await api<LoginResponse>('/login', { method: 'POST', json: form })
     if (r.totp_required) {
       totpStep.value = true
       totpCode.value = ''
       return
     }
-    setToken(r.token)
+    if (r.token) setToken(r.token)
     applyUser(r)
     toastOk(t('login.welcomeBack', { name: r.nickname || r.username }))
     router.push('/')
   } catch (e) {
-    error.value = e.message
-    toastErr(e.message)
+    error.value = (e as Error).message
+    toastErr((e as Error).message)
   } finally {
     loading.value = false
   }
@@ -161,14 +162,14 @@ async function doTotp() {
   loading.value = true
   error.value = ''
   try {
-    const r = await api('/login/totp', { method: 'POST', json: { username: form.username, code: totpCode.value } })
+    const r = await api<LoginTotpResponse>('/login/totp', { method: 'POST', json: { username: form.username, code: totpCode.value } })
     setToken(r.token)
     applyUser(r)
     toastOk(t('login.welcomeBack', { name: r.nickname || r.username }))
     router.push('/')
   } catch (e) {
-    error.value = e.message
-    toastErr(e.message)
+    error.value = (e as Error).message
+    toastErr((e as Error).message)
   } finally {
     loading.value = false
   }

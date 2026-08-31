@@ -29,29 +29,37 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps({
-  /** 0-100 的百分比 */
-  value: { type: Number, default: 0 },
-  label: { type: String, default: '' },
-  sub: { type: String, default: '' },
-  unit: { type: String, default: '%' },
-  color: { type: String, default: '#60a5fa' },
-  size: { type: Number, default: 120 },
-  /** 中心显示的自定义文本(默认取 value) */
-  display: { type: [String, Number], default: null },
-  /** 小数位 */
-  digits: { type: Number, default: 1 },
-})
+const props = withDefaults(
+  defineProps<{
+    /** 0-100 的百分比 */
+    value?: number
+    label?: string
+    sub?: string
+    unit?: string
+    color?: string
+    size?: number
+    /** 中心显示的自定义文本(默认取 value) */
+    display?: string | number | null
+    /** 小数位 */
+    digits?: number
+  }>(),
+  {
+    value: 0,
+    label: '',
+    sub: '',
+    unit: '%',
+    color: '#60a5fa',
+    size: 120,
+    display: null,
+    digits: 1,
+  },
+)
 
 const circumference = Math.round(2 * Math.PI * 50 * 100) / 100
 const clamped = computed(() => Math.min(100, Math.max(0, props.value || 0)))
-const center = computed(() => {
-  if (props.display !== null && props.display !== '') return props.display
-  return props.value == null ? '-' : props.value.toFixed(props.digits)
-})
 </script>
 
 <style scoped>

@@ -42,7 +42,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -54,23 +54,24 @@ import DetailOverview from './container/DetailOverview.vue'
 import DetailLogs from './container/DetailLogs.vue'
 import DetailStats from './container/DetailStats.vue'
 import DetailTerminal from './container/DetailTerminal.vue'
-import { api } from '../api'
-import { containerName, shortId } from '../util'
+import { containerAction, inspectContainer, removeContainer } from '../api'
+import { errorMessage, shortId } from '../util'
 import { useConfirm } from '../confirm'
 import { toastErr, toastOk } from '../toast'
+import type { ContainerInspect } from '../types'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const id = computed(() => route.params.id)
+const id = computed(() => String(route.params.id || ''))
 const confirm = useConfirm()
 
-const inspect = ref(null)
+const inspect = ref<ContainerInspect | null>(null)
 const status = ref('')
 const tab = ref('overview')
-let timer = null
+let timer: ReturnType<typeof setInterval> | null = null
 
-const tabs = [
+const tabs: { key: string; labelKey: string }[] = [
   { key: 'overview', labelKey: 'containerDetail.tabOverview' },
   { key: 'logs', labelKey: 'containerDetail.tabLogs' },
   { key: 'stats', labelKey: 'containerDetail.tabStats' },
@@ -81,36 +82,43 @@ const tabs = [
 const name = computed(() => {
   const n = inspect.value?.Name
   if (typeof n === 'string' && n) return n.replace(/^\//, '')
-  return containerName(inspect.value) || shortId(id.value)
+  return shortId(inspect.value?.Id || id.value)
 })
 
 async function load() {
   try {
-    inspect.value = await api(`/containers/${id.value}`)
+    inspect.value = await inspectContainer(id.value)
     status.value = inspect.value?.State?.Status || ''
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
-async function act(action) {
+async function act(action: string) {
   try {
-    await api(`/containers/${id.value}/${action}`, { method: 'POST' })
-    toastOk({ start: t('containerDetail.toastStarted'), stop: t('containerDetail.toastStopped'), restart: t('containerDetail.toastRestarted'), pause: t('containerDetail.toastPaused'), unpause: t('containerDetail.toastResumed') }[action])
+    await containerAction(id.value, action as 'start' | 'stop' | 'restart' | 'pause' | 'unpause')
+    const msgs: Record<string, string> = {
+      start: t('containerDetail.toastStarted'),
+      stop: t('containerDetail.toastStopped'),
+      restart: t('containerDetail.toastRestarted'),
+      pause: t('containerDetail.toastPaused'),
+      unpause: t('containerDetail.toastResumed'),
+    }
+    toastOk(msgs[action])
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
 // 重建容器(保留原配置,先建新再删旧)
 async function rebuild() {
   try {
-    await api(`/containers/${id.value}/recreate`, { method: 'POST' })
+    await containerAction(id.value, 'recreate')
     toastOk(t('common.done'))
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
@@ -121,11 +129,11 @@ async function remove() {
   })
   if (!ok) return
   try {
-    await api(`/containers/${id.value}?force=true`, { method: 'DELETE' })
+    await removeContainer(id.value, true)
     toastOk(t('common.deleted'))
     router.push('/containers')
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
@@ -133,7 +141,9 @@ onMounted(() => {
   load()
   timer = setInterval(load, 5000)
 })
-onBeforeUnmount(() => clearInterval(timer))
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+})
 watch(id, () => {
   tab.value = 'overview'
   load()

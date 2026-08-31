@@ -34,7 +34,7 @@
             </div>
             <div class="flex items-center justify-center gap-3 mt-3 pt-3 border-t border-line/60">
               <span v-if="info.release?.published_at" class="text-[11px] text-muted flex items-center gap-1">
-                <Icon name="clock" size="12" /> {{ formatDate(info.release.published_at) }}
+                <Icon name="clock" size="12" /> {{ formatDate(info.release.published_at as unknown as number) }}
               </span>
               <span class="w-px h-3 bg-line" />
               <span class="text-[11px] text-muted flex items-center gap-1">
@@ -168,23 +168,25 @@
   </Modal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 import { Button } from '@/components/ui/button'
-import { api } from '../api'
+import { checkUpdate, getUpdateStatus, applyUpdate } from '../api'
 import { useConfirm } from '../confirm'
 import { formatDate } from '../util'
 import { toastErr, toastOk } from '../toast'
+import type { UpdateInfo, UpdateStatus } from '../types'
 
 const { t } = useI18n()
-const props = defineProps({ open: Boolean })
-const emit = defineEmits(['close'])
+const props = defineProps<{ open: boolean }>()
+// 模板经 $emit('close') 触发,无需在 script 中持有 emit
+defineEmits<{ close: [] }>()
 const confirm = useConfirm()
 
-const info = ref(null)
+const info = ref<UpdateInfo | null>(null)
 const loading = ref(false)
 const error = ref('')
 const applying = ref(false)
@@ -194,14 +196,14 @@ const percent = ref(0) // 进度 0-100
 const phaseError = ref('')
 
 // Release Notes 分类图标(与后端 note section type 对应)
-const NOTE_ICONS = {
+const NOTE_ICONS: Record<string, string> = {
   features: '✨',
   bug_fixes: '🐛',
   improvements: '🔧',
   security: '🔒',
   breaking_changes: '⚠️',
 }
-const noteIcon = (type) => NOTE_ICONS[type] || '📋'
+const noteIcon = (type: string): string => NOTE_ICONS[type] || '📋'
 
 async function refresh() {
   loading.value = true
@@ -212,9 +214,9 @@ async function refresh() {
   percent.value = 0
   phaseError.value = ''
   try {
-    info.value = await api('/update/check')
+    info.value = await checkUpdate()
   } catch (e) {
-    error.value = e.message
+    error.value = (e as Error).message
   } finally {
     loading.value = false
   }
@@ -224,12 +226,12 @@ async function refresh() {
 //  - 到 done(compose 已接管)或 restarting(二进制即将重启)返回该状态
 //  - failed 返回状态(带 error)
 //  - 请求失败(面板重启中/进程退出)返回 null,由调用方转轮询版本接口确认新版本上线
-async function pollStatus() {
+async function pollStatus(): Promise<UpdateStatus | null> {
   for (let i = 0; i < 300; i++) {
     await new Promise((r) => setTimeout(r, 1000))
-    let s
+    let s: UpdateStatus
     try {
-      s = await api('/update/status')
+      s = await getUpdateStatus()
     } catch {
       return null // 面板重启中
     }
@@ -243,11 +245,11 @@ async function pollStatus() {
 
 // 更新后面板重启/容器重建,轮询 check 直到新版本上线(最多 60 秒)。
 // Health Check + Version Verify:无错误 && 确认无更新 && 当前版本已非 unknown(真实版本已上线)。
-async function waitDone() {
+async function waitDone(): Promise<boolean> {
   for (let i = 0; i < 12; i++) {
     await new Promise((r) => setTimeout(r, 5000))
     try {
-      const r = await api('/update/check')
+      const r = await checkUpdate()
       // 新版已上线:检查成功、无更新提示、当前版本是真实版本(非 unknown)
       if (!r.error && r.has_update === false && r.current && r.current !== 'unknown') return true
     } catch { /* 面板重启中,忽略 */ }
@@ -274,7 +276,7 @@ async function apply() {
   phaseError.value = ''
   try {
     // 异步启动,立即返回;进度轮询 /update/status
-    await api('/update/apply', { method: 'POST' })
+    await applyUpdate()
     const s = await pollStatus()
     if (s && s.phase === 'failed') {
       phaseError.value = s.error || t('update.phase_failed')
@@ -295,7 +297,7 @@ async function apply() {
     }
   } catch (e) {
     applying.value = false
-    toastErr(e.message)
+    toastErr((e as Error).message)
   }
 }
 

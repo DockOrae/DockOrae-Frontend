@@ -16,17 +16,18 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import Icon from './Icon.vue'
 import { toastState } from '../toast'
+import type { IconName } from '../icons'
 
-function colorOf(type) {
-  return { success: '#34d399', error: '#f87171', info: '#60a5fa' }[type] || '#8b93a7'
+function colorOf(type: string): string {
+  return ({ success: '#34d399', error: '#f87171', info: '#60a5fa' } as Record<string, string>)[type] || '#8b93a7'
 }
-function borderColor(type) {
-  return { success: 'rgba(52,211,153,.35)', error: 'rgba(248,113,113,.35)', info: 'rgba(96,165,250,.35)' }[type] || '#232a38'
+function borderColor(type: string): string {
+  return ({ success: 'rgba(52,211,153,.35)', error: 'rgba(248,113,113,.35)', info: 'rgba(96,165,250,.35)' } as Record<string, string>)[type] || '#232a38'
 }
-function iconOf(type) {
-  return { success: 'check', error: 'alert', info: 'info' }[type] || 'info'
+function iconOf(type: string): IconName {
+  return ({ success: 'check', error: 'alert', info: 'info' } as Record<string, IconName>)[type] || 'info'
 }
 </script>

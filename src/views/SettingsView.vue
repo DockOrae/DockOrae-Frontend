@@ -15,7 +15,7 @@
               <Icon v-else name="check" size="14" /> {{ t('settings.savePanel') }}
             </button>
                                             
-            <Button variant="brand"  @click="panelRestart">
+            <Button variant="brand" @click="panelRestart">
               <Icon name="restart" size="14" /> {{ t('settings.restartPanel') }}
             </Button>
                                                                
@@ -180,7 +180,7 @@
               <span v-if="accountLoading" class="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               <Icon v-else name="check" size="14" /> {{ t('settings.saveAccount') }}
             </button>
-            <Button variant="brand"  @click="panelRestart">
+            <Button variant="brand" @click="panelRestart">
               <Icon name="restart" size="14" /> {{ t('settings.restartPanel') }}
             </Button>
                                                  
@@ -216,7 +216,7 @@
               @error="onWallpaperError"
             />
             <div class="flex-1">
-              <Button variant="ghost" size="sm"  @click="wallpaperInput?.click()">
+              <Button variant="ghost" size="sm" @click="wallpaperInput?.click()">
                 <Icon name="image" size="13" /> {{ t('settings.changeWallpaper') }}
               </Button>
               <input ref="wallpaperInput" type="file" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" @change="selectWallpaper" />
@@ -260,7 +260,7 @@
           <div v-if="!user.totpEnabled">
             <div v-if="!totpSetup.uri" class="flex gap-2">
               <Input v-model="totpSetup.password" type="password" class="flex-1" :placeholder="t('settings.oldPwd')" />
-              <Button variant="brand"  :disabled="totpBusy" @click="totpGetKey">
+              <Button variant="brand" :disabled="totpBusy" @click="totpGetKey">
                 <span v-if="totpBusy" class="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                 {{ t('settings.totpSetupBtn') }}
               </Button>
@@ -276,7 +276,7 @@
               </div>
               <div class="flex gap-2">
                 <Input v-model="totpSetup.code" class="flex-1 text-center !text-base tracking-[0.4em] font-mono" maxlength="6" inputmode="numeric" :placeholder="t('settings.totpCodePh')" />
-                <Button variant="brand"  :disabled="totpBusy" @click="totpEnable">
+                <Button variant="brand" :disabled="totpBusy" @click="totpEnable">
                   <span v-if="totpBusy" class="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                   {{ t('settings.totpEnableBtn') }}
                 </Button>
@@ -286,13 +286,13 @@
           </div>
           <div v-else>
             <div v-if="!disableOpen" class="flex gap-2">
-              <Button variant="destructive"  @click="disableOpen = true">{{ t('settings.totpDisableBtn') }}</Button>
+              <Button variant="destructive" @click="disableOpen = true">{{ t('settings.totpDisableBtn') }}</Button>
             </div>
             <div v-else class="space-y-3">
               <Input v-model="disableForm.password" type="password" :placeholder="t('settings.oldPwd')" />
               <div class="flex gap-2">
                 <Input v-model="disableForm.code" class="flex-1 text-center !text-base tracking-[0.4em] font-mono" maxlength="6" inputmode="numeric" :placeholder="t('settings.totpCodePh')" />
-                <Button variant="destructive"  :disabled="totpBusy" @click="totpDisable">
+                <Button variant="destructive" :disabled="totpBusy" @click="totpDisable">
                   <span v-if="totpBusy" class="inline-block w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                   {{ t('settings.totpDisableBtn') }}
                 </Button>
@@ -315,7 +315,7 @@
               <span v-if="panelLoading" class="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               <Icon v-else name="check" size="14" /> {{ t('settings.savePanel') }}
             </button>
-            <Button variant="brand"  @click="panelRestart">
+            <Button variant="brand" @click="panelRestart">
               <Icon name="restart" size="14" /> {{ t('settings.restartPanel') }}
             </Button>
                                                  
@@ -390,7 +390,7 @@
           </div>
 
           <div class="mt-4">
-            <Button variant="brand"  :disabled="panelLoading" @click="tgTest">{{ t('settings.tgTest') }}</Button>
+            <Button variant="brand" :disabled="panelLoading" @click="tgTest">{{ t('settings.tgTest') }}</Button>
           </div>
         </Card>
 
@@ -475,7 +475,7 @@
               <span v-if="panelLoading" class="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
               <Icon v-else name="check" size="14" /> {{ t('settings.savePanel') }}
             </button>
-            <Button variant="brand"  @click="panelRestart">
+            <Button variant="brand" @click="panelRestart">
               <Icon name="restart" size="14" /> {{ t('settings.restartPanel') }}
             </Button>
                                                  
@@ -582,7 +582,7 @@
           </div>
 
           <div class="mt-4">
-            <Button variant="brand"  :disabled="panelLoading" @click="emailTest">{{ t('settings.testSmtp') }}</Button>
+            <Button variant="brand" :disabled="panelLoading" @click="emailTest">{{ t('settings.testSmtp') }}</Button>
           </div>
         </Card>
 
@@ -670,7 +670,7 @@
               </div>
               <div>
                 <div class="text-[11px] text-muted mb-0.5">{{ t('license.expires') }}</div>
-                <div class="text-[13px] text-text">{{ fmtDate(licInfo.expires_at || licInfo.exp) }}</div>
+                <div class="text-[13px] text-text">{{ fmtDate((licInfo.expires_at || licInfo.exp) as number) }}</div>
               </div>
               <div class="sm:col-span-2">
                 <div class="text-[11px] text-muted mb-0.5">{{ t('license.deviceId') }}</div>
@@ -762,7 +762,7 @@
                 <input ref="licFileInput" type="file" class="hidden" accept=".lic,.key,.txt" @change="onLicFile" />
               </div>
               <div class="flex justify-between items-center gap-3 mt-5">
-                <Button variant="ghost" size="sm"  @click="licFormOpen = false; resetLicForm()">{{ t('common.cancel') }}</Button>
+                <Button variant="ghost" size="sm" @click="licFormOpen = false; resetLicForm()">{{ t('common.cancel') }}</Button>
                 <Button variant="brand" size="sm" class="transition-all duration-200" :class="licFile ? 'opacity-100 shadow-lg shadow-brand/25 ring-1 ring-brand/50' : 'opacity-35 grayscale'"
                   :disabled="licBusy || !licFile"
                   @click="authorizeFile"
@@ -800,12 +800,13 @@
   </div>
 </template>
 
-<script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+<script setup lang="ts">
+import { computed, onMounted, reactive, ref, watch, type CSSProperties } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import QRCode from 'qrcode'
 import Icon from '../components/Icon.vue'
+import type { IconName } from '../icons'
 import { LANGS } from '../i18n'
 import { api, setToken, getRegistryMirrors, saveRegistryMirrors, getLicense, activateLicenseFile, deactivateLicense, verifyLicense } from '../api'
 import { toastErr, toastOk } from '../toast'
@@ -818,7 +819,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import type { PanelSettings, PanelSettingsPatch, ProfileResponse, TotpSetupResponse } from '../types'
 
 const { t } = useI18n()
 const confirmAction = useConfirm()
@@ -826,21 +827,21 @@ const route = useRoute()
 const router = useRouter()
 
 // 分类切换(#general/#security/#telegram/#email/#license/#about;常规页内 tab:#general/#cert/#datetime)
-const SECTIONS = ['general', 'cert', 'datetime', 'security', 'telegram', 'email', 'license', 'about']
+const SECTIONS: string[] = ['general', 'cert', 'datetime', 'security', 'telegram', 'email', 'license', 'about']
 // 常规页内横向 tab(仿 3x-ui GeneralTab)
-const generalTabs = [
+const generalTabs: Array<{ key: string; labelKey: string; icon: IconName }> = [
   { key: 'general', labelKey: 'settings.general', icon: 'settings' },
   { key: 'cert', labelKey: 'settings.certificate', icon: 'shield' },
   { key: 'datetime', labelKey: 'settings.dateTime', icon: 'clock' },
 ]
 // 安全设定页内横向 tab(仿 3x-ui SecurityTab)
-const securityTabs = [
+const securityTabs: Array<{ key: string; labelKey: string; icon: IconName }> = [
   { key: 'credentials', labelKey: 'settings.adminCredentials', icon: 'user' },
   { key: 'twofactor', labelKey: 'settings.twoFactor', icon: 'lock' },
 ]
 const active = ref('general')
 const secTab = ref('credentials')
-function go(section) {
+function go(section: string) {
   active.value = section
   router.replace({ hash: '#' + section })
 }
@@ -856,7 +857,7 @@ watch(
 )
 
 // 时区选择列表(常用时区)
-const TIMEZONES = [
+const TIMEZONES: string[] = [
   'UTC',
   'Asia/Shanghai', 'Asia/Hong_Kong', 'Asia/Taipei', 'Asia/Singapore', 'Asia/Tokyo',
   'Asia/Seoul', 'Asia/Kolkata', 'Asia/Dubai', 'Asia/Bangkok', 'Asia/Jakarta', 'Asia/Manila',
@@ -866,7 +867,7 @@ const TIMEZONES = [
 ]
 
 // NTP 时间同步服务器选择列表
-const NTPSERVERS = [
+const NTPSERVERS: string[] = [
   'pool.ntp.org', 'time.apple.com', 'time1.google.com', 'time.cloudflare.com',
   'ntp.tencent.com', 'ntp1.aliyun.com', 'ntp.ntsc.ac.cn', 'cn.ntp.org.cn',
 ]
@@ -878,26 +879,31 @@ function panelRestart() {
       if (!ok) return
       api('/system/restart', { method: 'POST' })
         .then(() => toastOk(t('status.restarting')))
-        .catch((e) => toastErr(e.message))
+        .catch((e: unknown) => toastErr((e as Error).message))
     })
 }
 
-const okStyle = { color: '#34d399', background: 'rgba(52,211,153,.12)', border: '1px solid rgba(52,211,153,.3)' }
-const mutedStyle = { color: '#8b93a7', background: 'rgba(139,147,167,.12)', border: '1px solid rgba(139,147,167,.3)' }
-const dangerStyle = { color: '#f87171', background: 'rgba(248,113,113,.12)', border: '1px solid rgba(248,113,113,.3)' }
-const fmtDate = (ts) => (ts ? new Date(ts * 1000).toLocaleDateString() : '-')
-// V2 Key 的功能列表展示(与 License Server Feature Registry 一致)
-const fmtFeatures = (feats) => {
-  if (!Array.isArray(feats) || feats.length === 0) return '-'
-  return feats.join(', ')
-}
+// 徽标/状态样式(ok/muted/danger)
+// 注意:必须用 CSSProperties(Vue 的 CSSProperties 含 --${string} 模板索引签名,
+// 自定义 interface 因缺索引签名无法赋给 :style)
+type StyleObj = CSSProperties
+const okStyle: StyleObj = { color: '#34d399', background: 'rgba(52,211,153,.12)', border: '1px solid rgba(52,211,153,.3)' }
+const mutedStyle: StyleObj = { color: '#8b93a7', background: 'rgba(139,147,167,.12)', border: '1px solid rgba(139,147,167,.3)' }
+const dangerStyle: StyleObj = { color: '#f87171', background: 'rgba(248,113,113,.12)', border: '1px solid rgba(248,113,113,.3)' }
+const fmtDate = (ts: number | undefined): string => (ts ? new Date(ts * 1000).toLocaleDateString() : '-')
 
 // 子 tab 状态(仿 3x-ui TelegramTab/EmailTab:面板设置|通知、SMTP 设置|通知)
 const tgTab = ref('panel')
 const emailTab = ref('smtp')
 
 // 通知事件分组(仿 3x-ui NotificationGroup:分组标题 + 计数 + 事件勾选)
-const notifyGroups = [
+interface NotifyGroup {
+  key: string
+  icon: IconName
+  labelKey: string
+  events: Array<{ key: string; labelKey: string }>
+}
+const notifyGroups: NotifyGroup[] = [
   {
     key: 'account', icon: 'user', labelKey: 'notify.groupAccount',
     events: [
@@ -919,7 +925,7 @@ const notifyGroups = [
   },
 ]
 // 某分组已勾选数量(仿 3x-ui NotificationHeader count/total)
-function countSel(g, kind = 'tg') {
+function countSel(g: { events: Array<{ key: string }> }, kind: 'tg' | 'email' = 'tg') {
   const list = kind === 'email' ? emailEvents.value : tgEvents.value
   return g.events.filter((e) => list.includes(e.key)).length
 }
@@ -929,9 +935,9 @@ const notifyMode = ref('every') // every | @hourly | @daily | @weekly | @monthly
 const notifyNum = ref(1)
 const notifyUnit = ref('m')
 const notifyCustom = ref('')
-const EVERY_RE = /^@every\s+(\d+)\s*([smh])$/i
+const EVERY_RE: RegExp = /^@every\s+(\d+)\s*([smh])$/i
 
-function parseNotifyTime(raw) {
+function parseNotifyTime(raw: string) {
   const v = (raw || '').trim()
   const m = v.match(EVERY_RE)
   if (m) {
@@ -954,7 +960,7 @@ function parseNotifyTime(raw) {
   notifyCustom.value = v
 }
 
-function composeNotifyTime() {
+function composeNotifyTime(): string {
   if (notifyMode.value === 'every') return `@every ${Math.max(1, notifyNum.value || 1)}${notifyUnit.value}`
   if (notifyMode.value === 'custom') return notifyCustom.value
   return notifyMode.value
@@ -973,7 +979,7 @@ function onNotifyModeChange() {
 function onNotifyCustomChange() {
   form.tgRunTime = notifyCustom.value
 }
-function toCrontab() {
+function toCrontab(): string {
   switch (notifyMode.value) {
     case '@hourly': return '0 0 * * * *'
     case '@daily': return '0 0 0 * * *'
@@ -990,7 +996,40 @@ function toCrontab() {
 }
 
 // ---------- 面板设置 ----------
-const form = reactive({
+// 表单编辑态:字段与 PanelSettings 一致(值类型同为 string|number|boolean|string[])
+interface SettingsFormState {
+  webListen: string
+  webDomain: string
+  webPort: number
+  webBasePath: string
+  noAuthSetting: string
+  sessionMaxAge: number
+  webCertFile: string
+  webKeyFile: string
+  webForceSSL: boolean
+  timeZone: string
+  datePickerType: string
+  ntpServer: string
+  tgEnable: boolean
+  tgBotToken: string
+  tgAdminChatId: string
+  tgRunTime: string
+  tgBotBackup: boolean
+  tgLang: string
+  tgBotAPIServer: string
+  emailEnable: boolean
+  smtpHost: string
+  smtpPort: number
+  smtpUser: string
+  smtpPass: string
+  smtpFrom: string
+  smtpFromName: string
+  smtpTo: string
+  smtpEncryption: string
+  tgNotifyEvents: string[]
+  emailNotifyEvents: string[]
+}
+const form = reactive<SettingsFormState>({
   webListen: '', webDomain: '', webPort: 8080, webBasePath: '/', noAuthSetting: '401', sessionMaxAge: 10080,
   webCertFile: '', webKeyFile: '', webForceSSL: false, timeZone: 'Asia/Shanghai', datePickerType: 'gregorian', ntpServer: 'pool.ntp.org',
   tgEnable: false, tgBotToken: '', tgAdminChatId: '', tgRunTime: '', tgBotBackup: false,
@@ -1000,8 +1039,8 @@ const form = reactive({
   tgNotifyEvents: [], emailNotifyEvents: [],
 })
 const allowlistText = ref('')
-const tgEvents = ref([])
-const emailEvents = ref([])
+const tgEvents = ref<string[]>([])
+const emailEvents = ref<string[]>([])
 const panelLoading = ref(false)
 const panelErr = ref('')
 const panelSaved = ref(false)
@@ -1020,7 +1059,7 @@ const smtpPassConfigured = ref(false)
 
 async function loadPanelSettings() {
   try {
-    const s = await api('/system/settings')
+    const s = await api<PanelSettings>('/system/settings')
     Object.assign(form, {
       webListen: s.webListen || '',
       webDomain: s.webDomain || '',
@@ -1065,7 +1104,7 @@ async function loadPanelSettings() {
 async function savePanel() {
   panelErr.value = ''
   panelSaved.value = false
-  const patch = {
+  const patch: PanelSettingsPatch = {
     webListen: form.webListen.trim(),
     webDomain: form.webDomain.trim(),
     webPort: Number(form.webPort) || 8080,
@@ -1109,8 +1148,8 @@ async function savePanel() {
     baseSnapshot = snapshotForm()
     settingsDirty.value = false
   } catch (e) {
-    panelErr.value = e.message
-    toastErr(e.message)
+    panelErr.value = (e as Error).message
+    toastErr((e as Error).message)
   } finally {
     panelLoading.value = false
   }
@@ -1126,12 +1165,12 @@ async function emailTest() {
     await api('/system/test-email', { method: 'POST' })
     toastOk(t('settings.testSmtpSent'))
   } catch (e) {
-    toastErr(e.message)
+    toastErr((e as Error).message)
   }
 }
 
 // ---------- 账号凭证(原用户名/原密码/新用户名/新密码;原用户名预填当前账号) ----------
-const cred = reactive({ oldUsername: user.username || '', oldPassword: '', newUsername: '', newPassword: '' })
+const cred = reactive<{ oldUsername: string; oldPassword: string; newUsername: string; newPassword: string }>({ oldUsername: user.username || '', oldPassword: '', newUsername: '', newPassword: '' })
 const credErr = ref('')
 const accountLoading = ref(false)
 
@@ -1165,7 +1204,7 @@ async function saveAccount() {
       user.mustChangePassword = false
     }
     if (nu && nu !== user.username) {
-      const r = await api('/profile', { method: 'POST', json: { username: nu, nickname: null } })
+      const r = await api<ProfileResponse>('/profile', { method: 'POST', json: { username: nu, nickname: null } })
       if (r.token) setToken(r.token)
       applyUser(r)
       cred.oldUsername = nu
@@ -1179,15 +1218,15 @@ async function saveAccount() {
     credBase = credSnapshot()
     toastOk(t('settings.toastCredentialsSaved'))
   } catch (e) {
-    credErr.value = e.message
-    toastErr(e.message)
+    credErr.value = (e as Error).message
+    toastErr((e as Error).message)
   } finally {
     accountLoading.value = false
   }
 }
 
 // ---------- 登录页壁纸(替换登录背景图) ----------
-const wallpaperInput = ref(null)
+const wallpaperInput = ref<HTMLInputElement | null>(null)
 const wallpaperPreview = ref('/api/system/wallpaper?t=' + Date.now())
 const wallpaperFailed = ref(false)
 // 新选的壁纸(base64),随"保存"按钮一起上传
@@ -1202,9 +1241,10 @@ function refreshWallpaperPreview() {
   wallpaperPreview.value = '/api/system/wallpaper?t=' + Date.now()
 }
 // 选图仅做本地预览并标记 dirty,真正上传在 saveAccount 里
-function selectWallpaper(ev) {
-  const file = ev.target.files?.[0]
-  ev.target.value = ''
+function selectWallpaper(ev: Event) {
+  const input = ev.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
   if (!file) return
   if (file.size > 10 * 1024 * 1024) {
     toastErr(t('settings.wallpaperNote'))
@@ -1236,12 +1276,12 @@ watch([cred, wallpaperPending], () => {
 }, { deep: true })
 
 // ---------- 双因素验证 ----------
-const totpSetup = reactive({ password: '', uri: '', secret: '', code: '' })
+const totpSetup = reactive<{ password: string; uri: string; secret: string; code: string }>({ password: '', uri: '', secret: '', code: '' })
 const totpQr = ref('')
 const totpBusy = ref(false)
 const totpErr = ref('')
 const disableOpen = ref(false)
-const disableForm = reactive({ password: '', code: '' })
+const disableForm = reactive<{ password: string; code: string }>({ password: '', code: '' })
 
 function totpReset() {
   Object.assign(totpSetup, { password: '', uri: '', secret: '', code: '' })
@@ -1257,12 +1297,12 @@ async function totpGetKey() {
   }
   totpBusy.value = true
   try {
-    const r = await api('/totp/setup', { method: 'POST', json: { password: totpSetup.password } })
+    const r = await api<TotpSetupResponse>('/totp/setup', { method: 'POST', json: { password: totpSetup.password } })
     totpSetup.uri = r.uri
     totpSetup.secret = r.secret
     totpQr.value = await QRCode.toDataURL(r.uri, { width: 280, margin: 1 })
   } catch (e) {
-    totpErr.value = e.message
+    totpErr.value = (e as Error).message
   } finally {
     totpBusy.value = false
   }
@@ -1281,7 +1321,7 @@ async function totpEnable() {
     totpReset()
     toastOk(t('settings.toastTotpEnabled'))
   } catch (e) {
-    totpErr.value = e.message
+    totpErr.value = (e as Error).message
   } finally {
     totpBusy.value = false
   }
@@ -1302,7 +1342,7 @@ async function totpDisable() {
     disableForm.code = ''
     toastOk(t('settings.toastTotpDisabled'))
   } catch (e) {
-    totpErr.value = e.message
+    totpErr.value = (e as Error).message
   } finally {
     totpBusy.value = false
   }
@@ -1346,8 +1386,8 @@ const licErr = ref('')
 const licFormOpen = ref(false)
 const licDragging = ref(false)
 const licFileName = ref('')
-const licFile = ref(null)
-const licFileInput = ref(null)
+const licFile = ref<File | null>(null)
+const licFileInput = ref<HTMLInputElement | null>(null)
 // 在线状态(V3):直接绑定 store 的 ref,/ws/license 实时推送自动更新(无需刷新页面)
 const licOnline = licenseOnline // { mode, state, sync_state, last_verify, grace_deadline, verify_state, last_event_id, state_version }
 
@@ -1360,7 +1400,7 @@ const licPlanLabel = computed(() => {
 })
 
 // V3 同步状态(sync_state)展示:online/offline/grace/grace_expired/server_recovered/revoked/blocked
-const licSyncStyle = computed(() => {
+const licSyncStyle = computed<StyleObj>(() => {
   switch (licOnline.value.sync_state) {
     case 'online': return okStyle
     case 'server_recovered': return { color: '#38bdf8', background: 'rgba(56,189,248,.12)', border: '1px solid rgba(56,189,248,.3)' }
@@ -1372,7 +1412,7 @@ const licSyncStyle = computed(() => {
     default: return mutedStyle
   }
 })
-const licSyncLabel = computed(() => {
+const licSyncLabel = computed<string>(() => {
   switch (licOnline.value.sync_state) {
     case 'online': return t('license.syncOnline')
     case 'server_recovered': return t('license.syncRecovered')
@@ -1386,24 +1426,10 @@ const licSyncLabel = computed(() => {
 })
 
 // 表格许可证状态列:吊销/封禁/过期优先于已激活(WS 实时更新)
-const licStatusLabel = computed(() => {
-  const vs = licOnline.value.verify_state
-  if (vs === 'revoked' || vs === 'invalid' || licOnline.value.sync_state === 'revoked') return t('license.revoked')
-  if (vs === 'blocked' || licOnline.value.sync_state === 'blocked') return t('license.blocked')
-  if (licInfo.value && licInfo.value.status === 'expired') return t('license.expired')
-  if (vs === 'clock_rollback') return t('license.clockRollback')
-  return t('license.active')
-})
-const licStatusStyle = computed(() => {
-  const vs = licOnline.value.verify_state
-  if (vs === 'revoked' || vs === 'invalid' || vs === 'blocked' || vs === 'clock_rollback'
-    || licOnline.value.sync_state === 'revoked' || licOnline.value.sync_state === 'blocked') return dangerStyle
-  if (licInfo.value && licInfo.value.status === 'expired') return dangerStyle
-  return okStyle
-})
+// (licStatusLabel / licStatusStyle 原实现未被模板引用,已随迁移移除)
 
 // 在线验证状态展示(style + label)
-const onlineStyle = computed(() => {
+const onlineStyle = computed<StyleObj>(() => {
   switch (licOnline.value.state) {
     case 'verified': return okStyle
     case 'grace': return { color: '#fbbf24', background: 'rgba(251,191,36,.12)', border: '1px solid rgba(251,191,36,.3)' }
@@ -1415,7 +1441,7 @@ const onlineStyle = computed(() => {
     default: return mutedStyle
   }
 })
-const onlineStateLabel = computed(() => {
+const onlineStateLabel = computed<string>(() => {
   switch (licOnline.value.state) {
     case 'verified': return t('license.onlineVerified')
     case 'grace': return t('license.onlineGrace')
@@ -1429,7 +1455,7 @@ const onlineStateLabel = computed(() => {
   }
 })
 
-function fmtDateTime(ts) {
+function fmtDateTime(ts?: number): string {
   return ts ? new Date(ts * 1000).toLocaleString() : '-'
 }
 
@@ -1457,7 +1483,7 @@ async function verifyNow() {
     else if (r.state === 'unbound') toastOk(t('license.unboundToast'))
     else if (r.error) toastErr(r.error)
   } catch (e) {
-    toastErr(e.message)
+    toastErr((e as Error).message)
   } finally {
     licBusy.value = false
   }
@@ -1472,17 +1498,18 @@ function resetLicForm() {
   licFile.value = null
   licDragging.value = false
 }
-function onLicFile(ev) {
-  const f = ev.target.files?.[0]
-  ev.target.value = ''
+function onLicFile(ev: Event) {
+  const input = ev.target as HTMLInputElement
+  const f = input.files?.[0]
+  input.value = ''
   if (f) {
     licFile.value = f
     licFileName.value = f.name
   }
 }
-function onLicDrop(ev) {
+function onLicDrop(ev: DragEvent) {
   licDragging.value = false
-  const f = ev.dataTransfer.files?.[0]
+  const f = ev.dataTransfer?.files?.[0]
   if (f) {
     licFile.value = f
     licFileName.value = f.name
@@ -1499,8 +1526,8 @@ async function authorizeFile() {
     await refreshLic()
     toastOk(t('license.toastActivated'))
   } catch (e) {
-    licErr.value = e.message
-    toastErr(e.message)
+    licErr.value = (e as Error).message
+    toastErr((e as Error).message)
   } finally {
     licBusy.value = false
   }
@@ -1508,14 +1535,14 @@ async function authorizeFile() {
 
 // ---------- 许可证状态判定(解绑 ≠ 吊销) ----------
 // 已吊销:仅服务端 verify 判定 revoked 时显示"已吊销"(唯一允许显示吊销的场景)
-const licRevoked = computed(
+const licRevoked = computed<boolean>(
   () =>
     licOnline.value.verify_state === 'revoked' ||
     licOnline.value.sync_state === 'revoked' ||
     licOnline.value.state === 'revoked',
 )
 // 管理员强制解绑:SSE 事件 source=admin / verify unbound → 显示"请重新激活"
-const licAdminUnbound = computed(
+const licAdminUnbound = computed<boolean>(
   () =>
     licOnline.value.unbind_source === 'admin' ||
     licOnline.value.unbind_reason === 'admin_unbound' ||
@@ -1524,12 +1551,7 @@ const licAdminUnbound = computed(
 
 // 用户主动解绑(确认后只解 Binding:保留 Key,License 不会被吊销,可重新激活)
 function confirmUnbind() {
-  confirmAction({
-    title: t('license.unbind'),
-    message: t('license.unbindConfirmDesc'),
-    okText: t('license.unbindConfirm'),
-    danger: true,
-  })
+  confirmAction(t('license.unbindConfirmDesc'), { title: t('license.unbind'), confirmText: t('license.unbindConfirm'), danger: true })
     .then(() => deactivate())
     .catch(() => {})
 }
@@ -1542,7 +1564,7 @@ async function deactivate() {
     await refreshLic()
     toastOk(t('license.toastDeactivated'))
   } catch (e) {
-    licErr.value = e.message
+    licErr.value = (e as Error).message
   } finally {
     licBusy.value = false
   }

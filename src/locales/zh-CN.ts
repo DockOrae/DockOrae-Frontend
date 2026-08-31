@@ -30,6 +30,7 @@ export default {
     restarting: '重启中',
     paused: '已暂停',
     deleted: '已删除',
+    done: '完成',
   },
   nav: {
     appStore: '应用商店',
@@ -96,14 +97,6 @@ export default {
     getKeyFirst: '请先获取绑定密钥',
     codeWrong: '验证码错误,请重试',
     notEnabled: '双因素验证未启用',
-  },
-  compose: {
-    nameInvalid: '项目名只能包含字母、数字、下划线、连字符(1-64 位)',
-    binaryMissing: '无法执行 docker-compose(镜像内未内置 compose?)',
-    binaryMissingDetail: '无法执行 docker-compose',
-    failed: 'docker-compose 执行失败,请检查上方输出',
-    notManaged: '该项目不在本面板管理范围内',
-    logsFailed: '无法启动 docker-compose logs',
   },
   container: {
     imageEmpty: '镜像不能为空',
@@ -179,6 +172,17 @@ export default {
     deviceBound: '本设备已绑定其他 License',
     fileRequired: '请选择授权文件',
     json: '授权数据无效',
+unbindConfirm: '确认解绑',
+unbindConfirmDesc: '解绑后本机将不再使用该 License,但 Key 不会被吊销,可在其他设备重新激活。',
+unboundToast: '已解绑',
+toastActivated: '激活成功',
+toastDeactivated: '已解绑',
+adminUnboundTitle: '授权已被管理员解绑',
+adminUnboundDesc: '该 License 已被授权服务器管理员解绑,请重新激活。',
+keyKept: '已保留 Key,可直接重新激活',
+reactivate: '重新激活',
+revokedDesc: '该 License 已被吊销,无法继续使用。',
+unboundDesc: '本机已解绑,Key 保留,可重新激活。',
     notActivated: '未激活',
   },
   theme: {
@@ -348,6 +352,12 @@ export default {
     toastRestarted: '已重启',
     toastDeployOk: '部署成功',
     deployFailed: '部署失败,请查看上方输出',
+    nameInvalid: '项目名只能包含字母、数字、下划线、连字符(1-64 位)',
+    binaryMissing: '无法执行 docker-compose(镜像内未内置 compose?)',
+    binaryMissingDetail: '无法执行 docker-compose',
+    failed: 'docker-compose 执行失败,请检查上方输出',
+    notManaged: '该项目不在本面板管理范围内',
+    logsFailed: '无法启动 docker-compose logs'
   },
   composeDetail: {
     title: 'Compose 详情',
@@ -580,6 +590,9 @@ export default {
     stack: '技术栈',
     source: '源码',
     json: '设置数据无效',
+    unitMinutes: '分钟',
+    unitHours: '小时',
+    unitDays: '天',
   },
   overview: {
     portBindings: '端口绑定',

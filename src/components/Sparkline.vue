@@ -19,16 +19,25 @@
   </svg>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps({
-  data: { type: Array, default: () => [] },
-  color: { type: String, default: '#ec4899' },
-  width: { type: Number, default: 300 },
-  height: { type: Number, default: 80 },
-  max: { type: Number, default: 0 },
-})
+const props = withDefaults(
+  defineProps<{
+    data?: number[]
+    color?: string
+    width?: number
+    height?: number
+    max?: number
+  }>(),
+  {
+    data: () => [],
+    color: '#ec4899',
+    width: 300,
+    height: 80,
+    max: 0,
+  },
+)
 
 const gid = `g${Math.random().toString(36).slice(2, 9)}`
 
@@ -49,7 +58,7 @@ const points = computed(() => {
 const areaPoints = computed(() => {
   const p = points.value
   if (!p) return ''
-  const last = p.split(' ').pop()
+  const last = p.split(' ').pop() ?? '0,0'
   return `${p} ${last.split(',')[0]},${props.height} 0,${props.height}`
 })
 </script>

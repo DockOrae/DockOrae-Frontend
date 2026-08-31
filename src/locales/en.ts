@@ -30,6 +30,7 @@ export default {
     restarting: 'Restarting',
     paused: 'Paused',
     deleted: 'Deleted',
+    done: 'Done',
   },
   nav: {
     appStore: 'App Store',
@@ -95,14 +96,6 @@ export default {
     getKeyFirst: 'Please get the binding key first',
     codeWrong: 'Verification code is wrong, please retry',
     notEnabled: 'Two-factor authentication is not enabled',
-  },
-  compose: {
-    nameInvalid: 'Project name can only contain letters, digits, underscore, hyphen (1-64 chars)',
-    binaryMissing: 'Cannot run docker-compose (binary not bundled in the image?)',
-    binaryMissingDetail: 'Cannot run docker-compose',
-    failed: 'docker-compose failed, check the output above',
-    notManaged: 'This project is not managed by the panel',
-    logsFailed: 'Cannot start docker-compose logs',
   },
   container: {
     imageEmpty: 'Image cannot be empty',
@@ -178,6 +171,17 @@ export default {
     deviceBound: 'This device is bound to another license',
     fileRequired: 'License file required',
     json: 'Invalid license data',
+unbindConfirm: 'Unbind',
+unbindConfirmDesc: 'Unbinding removes this license from this device, but the key is NOT revoked and can be reactivated on another device.',
+unboundToast: 'Unbound',
+toastActivated: 'License activated',
+toastDeactivated: 'License unbound',
+adminUnboundTitle: 'License unbound by administrator',
+adminUnboundDesc: 'This license was unbound by the license server administrator. Please reactivate.',
+keyKept: 'Key kept — you can reactivate it',
+reactivate: 'Reactivate',
+revokedDesc: 'This license has been revoked and can no longer be used.',
+unboundDesc: 'This device is unbound; the key is kept and can be reactivated.',
     notActivated: 'Not activated',
   },
   theme: {
@@ -347,6 +351,12 @@ export default {
     toastRestarted: 'Restarted',
     toastDeployOk: 'Deployed successfully',
     deployFailed: 'Deployment failed, see the output above',
+    nameInvalid: 'Project name can only contain letters, digits, underscore, hyphen (1-64 chars)',
+    binaryMissing: 'Cannot run docker-compose (binary not bundled in the image?)',
+    binaryMissingDetail: 'Cannot run docker-compose',
+    failed: 'docker-compose failed, check the output above',
+    notManaged: 'This project is not managed by the panel',
+    logsFailed: 'Cannot start docker-compose logs'
   },
   composeDetail: {
     title: 'Compose Details',
@@ -579,6 +589,9 @@ export default {
     stack: 'Tech stack',
     source: 'Source',
     json: 'Invalid settings data',
+    unitMinutes: 'minutes',
+    unitHours: 'hours',
+    unitDays: 'days',
   },
   overview: {
     portBindings: 'Port bindings',

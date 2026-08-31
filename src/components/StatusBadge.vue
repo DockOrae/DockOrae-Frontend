@@ -5,17 +5,17 @@
   </Badge>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Badge } from '@/components/ui/badge'
 
 const { t } = useI18n()
-const props = defineProps({
-  state: { type: String, default: '' },
-})
+const props = defineProps<{
+  state?: string
+}>()
 
-const MAP = {
+const MAP: Record<string, { color: string; labelKey: string | null; variant: string }> = {
   running: { color: '#34d399', labelKey: 'status.running', variant: 'success' },
   exited: { color: '#8b93a7', labelKey: 'status.exited', variant: 'default' },
   stopped: { color: '#8b93a7', labelKey: 'status.stopped', variant: 'default' },
@@ -28,7 +28,7 @@ const MAP = {
   partial: { color: '#fbbf24', labelKey: 'status.partial', variant: 'warning' },
 }
 
-const meta = computed(() => MAP[props.state] || { color: '#8b93a7', labelKey: null, variant: 'default' })
+const meta = computed(() => MAP[props.state || ''] || { color: '#8b93a7', labelKey: null, variant: 'default' })
 const variant = computed(() => meta.value.variant)
 const color = computed(() => meta.value.color)
 const cls = computed(() => (props.state ? '' : 'opacity-80'))

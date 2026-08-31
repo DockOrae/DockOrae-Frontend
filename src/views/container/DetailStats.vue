@@ -48,28 +48,29 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Sparkline from '../../components/Sparkline.vue'
 import { wsUrl } from '../../api'
 import { formatBytes } from '../../util'
 import { Card } from '@/components/ui/card'
+import type { ContainerStatsMessage } from '../../types'
 
 const { t } = useI18n()
-const props = defineProps({ id: { type: String, required: true } })
+const props = defineProps<{ id: string }>()
 
-const cpu = ref([])
-const mem = ref([])
-const net = ref([])
-const last = ref({})
+const cpu = ref<number[]>([])
+const mem = ref<number[]>([])
+const net = ref<number[]>([])
+const last = ref<ContainerStatsMessage>({ cpu_pct: 0, mem_usage: 0, mem_limit: 0, mem_pct: 0, net_rx: 0, net_tx: 0 })
 const connected = ref(false)
-let ws = null
-let prev = null
-let timer = null
+let ws: WebSocket | null = null
+let prev: { t: number; net_rx: number; net_tx: number } | null = null
+let timer: ReturnType<typeof setInterval> | null = null
 
-const rate = (v) => (v == null ? '-' : formatBytes(v) + '/s')
-const fmt = (v) => (v == null ? '-' : formatBytes(v))
+const rate = (v: number | null | undefined) => (v == null ? '-' : formatBytes(v) + '/s')
+const fmt = (v: number | null | undefined) => (v == null ? '-' : formatBytes(v))
 const cpuColor = computed(() => {
   const v = last.value.cpu_pct || 0
   return v > 80 ? '#f87171' : v > 50 ? '#fbbf24' : '#34d399'
@@ -79,9 +80,9 @@ function connect() {
   try {
     ws = new WebSocket(wsUrl(`/containers/${props.id}/stats`))
     ws.onopen = () => (connected.value = true)
-    ws.onmessage = (ev) => {
+    ws.onmessage = (ev: MessageEvent) => {
       try {
-        const s = JSON.parse(ev.data)
+        const s = JSON.parse(ev.data as string) as ContainerStatsMessage
         last.value = s
         const now = Date.now()
         if (prev) {
@@ -115,7 +116,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  clearInterval(timer)
+  if (timer) clearInterval(timer)
   ws?.close()
 })
 </script>

@@ -1,30 +1,34 @@
-<script setup>
+<script setup lang="ts">
 import { computed } from "vue";
+import type { HTMLAttributes } from "vue";
 import { cn } from "@/lib/utils";
 
-const props = defineProps({
-  defaultValue: { type: [String, Number], required: false },
-  modelValue: { type: [String, Number], required: false },
-  modelModifiers: { type: Object, required: false, default: () => ({}) },
-  class: {
-    type: [Boolean, null, String, Object, Array],
-    required: false,
-    skipCheck: true,
-  },
+interface Props {
+  defaultValue?: string | number | null;
+  modelValue?: string | number | null;
+  modelModifiers?: { number?: boolean; trim?: boolean };
+  class?: HTMLAttributes["class"];
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modelModifiers: () => ({}),
 });
 
-const emits = defineEmits(["update:modelValue"]);
+const emits = defineEmits<{
+  "update:modelValue": [value: string | number | null];
+}>();
 
 // 支持 v-model.number / v-model.trim(与原生行为一致:parseFloat 失败保留原值)
 const modelValue = computed({
-  get: () => props.modelValue ?? props.defaultValue ?? "",
-  set: (v) => {
+  get: (): string | number => props.modelValue ?? props.defaultValue ?? "",
+  set: (v: string | number) => {
+    let out: string | number = v
     if (props.modelModifiers?.number) {
-      const n = parseFloat(v)
-      v = Number.isNaN(n) ? v : n
+      const n = parseFloat(String(v))
+      out = Number.isNaN(n) ? v : n
     }
-    if (props.modelModifiers?.trim) v = String(v).trim()
-    emits("update:modelValue", v)
+    if (props.modelModifiers?.trim) out = String(out).trim()
+    emits("update:modelValue", out)
   },
 });
 </script>

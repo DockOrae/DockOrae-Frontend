@@ -59,50 +59,59 @@
   </Card>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '../../components/Icon.vue'
 import { Card } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDate } from '../../util'
+import type { ContainerInspect } from '../../types'
+import type { IconName } from '../../icons'
 
 const { t } = useI18n()
-const props = defineProps({ data: { type: Object, default: null } })
+const props = defineProps<{ data?: ContainerInspect | null }>()
 
-const rows = computed(() => {
-  const d = props.data || {}
-  const cfg = d.Config || {}
-  const state = d.State || {}
+interface OverviewRow {
+  label: string
+  icon: IconName
+  value?: string | number
+}
+
+const rows = computed<OverviewRow[]>(() => {
+  const d = props.data
+  if (!d) return []
   return [
     { label: t('overview.containerId'), icon: 'box', value: d.Id },
-    { label: t('overview.image'), icon: 'image', value: cfg.Image },
-    { label: t('overview.status'), icon: 'stats', value: state.Status },
+    { label: t('overview.image'), icon: 'image', value: d.Config?.Image },
+    { label: t('overview.status'), icon: 'stats', value: d.State?.Status },
     { label: t('overview.restartCount'), icon: 'restart', value: d.RestartCount },
-    { label: t('overview.created'), icon: 'clock', value: formatDate(d.Created) },
-    { label: t('overview.entrypoint'), icon: 'terminal', value: (cfg.Entrypoint || []).join(' ') },
-    { label: t('overview.command'), icon: 'terminal', value: (cfg.Cmd || []).join(' ') },
-    { label: t('overview.workdir'), icon: 'box', value: cfg.WorkingDir },
-    { label: t('overview.user'), icon: 'key', value: cfg.User },
-    { label: t('overview.hostname'), icon: 'info', value: cfg.Hostname },
+    { label: t('overview.created'), icon: 'clock', value: formatDate(Number(d.Created)) },
+    { label: t('overview.entrypoint'), icon: 'terminal', value: (d.Config?.Entrypoint || []).join(' ') },
+    { label: t('overview.command'), icon: 'terminal', value: (d.Config?.Cmd || []).join(' ') },
+    { label: t('overview.workdir'), icon: 'box', value: d.Config?.WorkingDir },
+    { label: t('overview.user'), icon: 'key', value: d.Config?.User },
+    { label: t('overview.hostname'), icon: 'info', value: d.Config?.Hostname },
     { label: t('overview.restartPolicy'), icon: 'restart', value: d.HostConfig?.RestartPolicy?.Name },
     { label: t('overview.networkMode'), icon: 'network', value: d.HostConfig?.NetworkMode },
   ]
 })
 
-const portList = computed(() => {
-  const ports = props.data?.NetworkSettings?.Ports || {}
+const portList = computed<string[]>(() => {
+  const ports = props.data?.NetworkSettings?.Ports
+  if (!ports) return []
   return Object.entries(ports)
     .map(([k, v]) => (v && v.length ? v.map((p) => `${(p.HostIp || '0.0.0.0')}:${p.HostPort || ''}->${k}`).join(', ') : k))
     .filter(Boolean)
 })
 
-const envList = computed(() => (props.data?.Config?.Env || []).slice(0, 40))
+const envList = computed<string[]>(() => (props.data?.Config?.Env || []).slice(0, 40))
 
-const mounts = computed(() => props.data?.Mounts || [])
+const mounts = computed<NonNullable<ContainerInspect['Mounts']>>(() => props.data?.Mounts || [])
 
-const netList = computed(() => {
-  const nets = props.data?.NetworkSettings?.Networks || {}
+const netList = computed<string[]>(() => {
+  const nets = props.data?.NetworkSettings?.Networks
+  if (!nets) return []
   return Object.keys(nets)
 })
 </script>

@@ -38,7 +38,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Terminal } from '@xterm/xterm'
@@ -49,12 +49,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { wsUrl } from '../../api'
-import { toastErr } from '../../toast'
+import { errorMessage } from '../../util'
 
 const { t } = useI18n()
-const props = defineProps({ id: { type: String, required: true } })
+const props = defineProps<{ id: string }>()
 
-const termEl = ref(null)
+const termEl = ref<HTMLElement | null>(null)
 const shell = ref('/bin/sh')
 const customShell = ref('/bin/sh')
 const connected = ref(false)
@@ -62,11 +62,11 @@ const error = ref('')
 const hasSelection = ref(false)
 const fontSize = ref(13)
 const dark = ref(true)
-let term = null
-let fit = null
-let ws = null
+let term: Terminal | null = null
+let fit: FitAddon | null = null
+let ws: WebSocket | null = null
 
-function currentShell() {
+function currentShell(): string {
   return shell.value === 'custom' ? customShell.value || '/bin/sh' : shell.value
 }
 
@@ -92,7 +92,7 @@ function connect() {
   try {
     ws = new WebSocket(wsUrl(`/containers/${props.id}/terminal?shell=${encodeURIComponent(currentShell())}`))
   } catch (e) {
-    error.value = e.message
+    error.value = errorMessage(e)
     return
   }
   ws.onopen = () => {
@@ -151,7 +151,7 @@ onMounted(() => {
   })
   fit = new FitAddon()
   term.loadAddon(fit)
-  term.open(termEl.value)
+  term.open(termEl.value!)
   fit.fit()
   term.onData((d) => ws?.send(d))
   term.onSelectionChange(() => {

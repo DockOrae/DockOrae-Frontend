@@ -19,7 +19,7 @@
           <TableRow v-for="v in volumes" :key="v.Name">
             <TableCell class="font-medium">{{ v.Name }}</TableCell>
             <TableCell class="text-muted">{{ v.Driver }}</TableCell>
-            <TableCell class="text-muted text-[12px]">{{ formatDate(v.CreatedAt) }}</TableCell>
+            <TableCell class="text-muted text-[12px]">{{ formatDate(v.CreatedAt as unknown as number) }}</TableCell>
             <TableCell>
               <Button variant="icon" class="text-danger" :title="t('common.delete')" @click="remove(v)">
                 <Icon name="trash" size="13" />
@@ -126,7 +126,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '../components/Icon.vue'
@@ -138,17 +138,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api } from '../api'
-import { formatDate } from '../util'
+import { errorMessage, formatDate } from '../util'
 import { useConfirm } from '../confirm'
 import { toastErr, toastOk } from '../toast'
+import type { CreateVolumeReq, VolumeListItem } from '../types'
 
 const { t } = useI18n()
-const volumes = ref([])
+const volumes = ref<VolumeListItem[]>([])
 const createOpen = ref(false)
 const error = ref('')
 const confirm = useConfirm()
 
-const form = reactive({
+interface VolForm {
+  name: string
+  type: 'local' | 'nfs'
+  nfs: { address: string; version: string; mountpoint: string; options: string }
+  opts: Array<{ key: string; value: string }>
+  labels: Array<{ key: string; value: string }>
+}
+
+const form = reactive<VolForm>({
   name: '',
   type: 'local',
   nfs: { address: '', version: '4', mountpoint: '', options: 'rw' },
@@ -166,8 +175,8 @@ function openCreate() {
   createOpen.value = true
 }
 
-function kvToObj(pairs) {
-  const out = {}
+function kvToObj(pairs: Array<{ key: string; value: string }>): Record<string, string> | undefined {
+  const out: Record<string, string> = {}
   for (const p of pairs) {
     const k = (p.key || '').trim()
     if (k) out[k] = p.value || ''
@@ -175,12 +184,12 @@ function kvToObj(pairs) {
   return Object.keys(out).length ? out : undefined
 }
 
-function buildPayload() {
-  const payload = { name: form.name.trim(), labels: kvToObj(form.labels) }
+function buildPayload(): CreateVolumeReq | null {
+  const payload: CreateVolumeReq = { name: form.name.trim(), labels: kvToObj(form.labels) }
   if (form.type === 'nfs') {
     // NFS 卷 = local 驱动 + driver_opts(type=nfs, o=addr=..., device=:path)
     if (!form.nfs.address.trim() || !form.nfs.mountpoint.trim()) return null
-    const opts = []
+    const opts: string[] = []
     opts.push('addr=' + form.nfs.address.trim())
     if (form.nfs.options.trim()) opts.push(form.nfs.options.trim())
     opts.push('nfsvers=' + form.nfs.version)
@@ -196,7 +205,7 @@ function buildPayload() {
 }
 
 async function load() {
-  volumes.value = await api('/volumes')
+  volumes.value = await api<VolumeListItem[]>('/volumes')
 }
 
 async function create() {
@@ -212,11 +221,11 @@ async function create() {
     createOpen.value = false
     load()
   } catch (e) {
-    error.value = e.message
+    error.value = errorMessage(e)
   }
 }
 
-async function remove(v) {
+async function remove(v: VolumeListItem) {
   const ok = await confirm(t('volumes.confirmDelete', { name: v.Name }), {
     title: t('volumes.confirmDeleteTitle'),
     confirmText: t('common.delete'),
@@ -227,7 +236,7 @@ async function remove(v) {
     toastOk(t('common.deleted'))
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 

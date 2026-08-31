@@ -11,17 +11,25 @@
   </Card>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Card } from '@/components/ui/card'
 import Icon from './Icon.vue'
+import type { IconName } from '../icons'
 
-defineProps({
-  icon: { type: String, required: true },
-  label: { type: String, required: true },
-  value: { type: [String, Number], required: true },
-  sub: { type: String, default: '' },
-  color: { type: String, default: '#ec4899' },
-  bg: { type: String, default: 'rgba(236,72,153,.12)' },
-})
-defineEmits(['click'])
+withDefaults(
+  defineProps<{
+    icon: IconName
+    label: string
+    value: string | number
+    sub?: string
+    color?: string
+    bg?: string
+  }>(),
+  {
+    sub: '',
+    color: '#ec4899',
+    bg: 'rgba(236,72,153,.12)',
+  },
+)
+defineEmits<{ click: [] }>()
 </script>

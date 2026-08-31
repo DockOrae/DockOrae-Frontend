@@ -12,13 +12,20 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import icons from '../icons'
+import type { IconName } from '../icons'
 
-defineProps({
-  name: { type: String, required: true },
-  size: { type: [Number, String], default: 16 },
-  /** fill 型图标(如 Remix Icon) */
-  filled: { type: Boolean, default: false },
-})
+withDefaults(
+  defineProps<{
+    name: IconName
+    size?: number | string
+    /** fill 型图标(如 Remix Icon) */
+    filled?: boolean
+  }>(),
+  {
+    size: 16,
+    filled: false,
+  },
+)
 </script>

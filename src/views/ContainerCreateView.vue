@@ -146,7 +146,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -159,26 +159,57 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card } from '@/components/ui/card'
 import { api } from '../api'
 import { licenseActive } from '../store'
+import { errorMessage } from '../util'
 import { toastErr, toastOk } from '../toast'
+import type { CreateContainerReq, CreateResponse, ImageListItem, NetworkListItem } from '../types'
 
 const { t } = useI18n()
 const router = useRouter()
-const form = reactive({ name: '', image: '', cmdText: '', restart_policy: 'no', network: 'bridge', tty: false, privileged: false })
-const ports = ref([])
-const envs = ref([])
-const vols = ref([])
-const images = ref([])
-const networks = ref([])
+
+interface CreateForm {
+  name: string
+  image: string
+  cmdText: string
+  restart_policy: string
+  network: string
+  tty: boolean
+  privileged: boolean
+}
+
+const form = reactive<CreateForm>({ name: '', image: '', cmdText: '', restart_policy: 'no', network: 'bridge', tty: false, privileged: false })
+
+interface PortItem {
+  container: string
+  host: number | null
+  host_ip?: string
+}
+interface EnvItem {
+  k: string
+  v: string
+}
+interface VolItem {
+  type: 'bind' | 'volume'
+  host: string
+  volume: string
+  container: string
+  mode: string
+}
+
+const ports = ref<PortItem[]>([])
+const envs = ref<EnvItem[]>([])
+const vols = ref<VolItem[]>([])
+const images = ref<string[]>([])
+const networks = ref<NetworkListItem[]>([])
 const loading = ref(false)
 const error = ref('')
 
 onMounted(async () => {
   try {
-    const [imgs, nets] = await Promise.all([api('/images'), api('/networks')])
+    const [imgs, nets] = await Promise.all([api<ImageListItem[]>('/images'), api<NetworkListItem[]>('/networks')])
     images.value = imgs.flatMap((i) => i.RepoTags || []).filter(Boolean)
     networks.value = nets.filter((n) => n.Name && !n.Name.startsWith('ingress'))
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 })
 
@@ -188,7 +219,7 @@ async function submit() {
     error.value = t('createContainer.errImage')
     return
   }
-  const payload = {
+  const payload: CreateContainerReq = {
     name: form.name || null,
     image: form.image,
     cmd: form.cmdText.trim() ? form.cmdText.trim().split(/\s+/) : null,
@@ -209,12 +240,12 @@ async function submit() {
   }
   loading.value = true
   try {
-    const r = await api('/containers', { method: 'POST', json: payload })
+    const r = await api<CreateResponse>('/containers', { method: 'POST', json: payload })
     toastOk(t('createContainer.toastCreated'))
     router.push('/containers/' + r.id)
   } catch (e) {
-    error.value = e.message
-    toastErr(e.message)
+    error.value = errorMessage(e)
+    toastErr(errorMessage(e))
   } finally {
     loading.value = false
   }

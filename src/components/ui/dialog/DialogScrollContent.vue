@@ -1,42 +1,36 @@
-<script setup>
-import { X } from "@lucide/vue";
-import { reactiveOmit } from "@vueuse/core";
-import {
-  DialogClose,
-  DialogContent,
-  DialogOverlay,
-  DialogPortal,
-  useForwardPropsEmits,
-} from "reka-ui";
-import { cn } from "@/lib/utils";
+<script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
+import { X } from "@lucide/vue"
+import { reactiveOmit } from "@vueuse/core"
+import { cn } from "@/lib/utils"
+import { DialogClose, DialogContent, DialogOverlay, DialogPortal, useForwardPropsEmits, type DialogContentProps, type DialogContentEmits } from "reka-ui"
 
 defineOptions({
   inheritAttrs: false,
-});
+})
 
-const props = defineProps({
-  forceMount: { type: Boolean, required: false },
-  disableOutsidePointerEvents: { type: Boolean, required: false },
-  asChild: { type: Boolean, required: false },
-  as: { type: null, required: false },
-  class: {
-    type: [Boolean, null, String, Object, Array],
-    required: false,
-    skipCheck: true,
-  },
-});
-const emits = defineEmits([
-  "escapeKeyDown",
-  "pointerDownOutside",
-  "focusOutside",
-  "interactOutside",
-  "openAutoFocus",
-  "closeAutoFocus",
-]);
+interface Props extends DialogContentProps {
+  class?: HTMLAttributes['class']
+}
 
-const delegatedProps = reactiveOmit(props, "class");
+const props = defineProps<Props>()
 
-const forwarded = useForwardPropsEmits(delegatedProps, emits);
+const emits = defineEmits<DialogContentEmits>()
+
+const delegatedProps = reactiveOmit(props, "class")
+const forwarded = useForwardPropsEmits(delegatedProps, emits)
+
+// 点击遮罩判定:点击位置超出内容区域(offset 越界)才视为点击遮罩关闭
+function onPointerDownOutside(event: {
+  detail: { originalEvent: PointerEvent }
+  preventDefault: () => void
+}): void {
+  const originalEvent = event.detail.originalEvent
+  const target = originalEvent.target as HTMLElement | null
+  if (target && (originalEvent.offsetX > target.clientWidth || originalEvent.offsetY > target.clientHeight)) {
+    event.preventDefault()
+  }
+}
 </script>
 
 <template>
@@ -52,18 +46,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits);
           )
         "
         v-bind="{ ...$attrs, ...forwarded }"
-        @pointer-down-outside="
-          (event) => {
-            const originalEvent = event.detail.originalEvent;
-            const target = originalEvent.target;
-            if (
-              originalEvent.offsetX > target.clientWidth ||
-              originalEvent.offsetY > target.clientHeight
-            ) {
-              event.preventDefault();
-            }
-          }
-        "
+        @pointer-down-outside="onPointerDownOutside"
       >
         <slot />
 

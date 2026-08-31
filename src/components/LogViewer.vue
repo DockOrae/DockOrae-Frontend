@@ -38,7 +38,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from './Icon.vue'
@@ -47,19 +47,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { wsUrl } from '../api'
 
 const { t } = useI18n()
-const props = defineProps({
-  stream: { type: String, required: true }, // 相对路径,如 /containers/abc/logs
-  follow: { type: Boolean, default: true },
-})
+const props = defineProps<{
+  stream: string // 相对路径,如 /containers/abc/logs
+  follow?: boolean
+}>()
 
-const box = ref(null)
-const lines = ref([])
-const plain = ref([])
+const box = ref<HTMLElement | null>(null)
+const lines = ref<string[]>([])
+const plain = ref<string[]>([])
 const connected = ref(false)
 const autoScroll = ref(true)
 const tail = ref('500')
-let ws = null
-let seq = 0
+let ws: WebSocket | null = null
 
 function connect() {
   disconnect()
@@ -145,17 +144,19 @@ onMounted(() => {
 onBeforeUnmount(() => disconnect())
 
 // ---------------- ANSI -> HTML(先转义再上色,防注入) ----------------
-const FG = { 30: '#8b93a7', 31: '#f87171', 32: '#34d399', 33: '#fbbf24', 34: '#60a5fa', 35: '#f472b6', 36: '#22d3ee', 37: '#e5e7eb' }
-const FG_B = { 90: '#6b7280', 91: '#ef4444', 92: '#22c55e', 93: '#eab308', 94: '#3b82f6', 95: '#ec4899', 96: '#06b6d4', 97: '#f9fafb' }
-const BG = { 40: '#1f2937', 41: '#7f1d1d', 42: '#14532d', 43: '#713f12', 44: '#1e3a8a', 45: '#701a75', 46: '#155e75', 47: '#374151' }
+const FG: Record<string, string> = { 30: '#8b93a7', 31: '#f87171', 32: '#34d399', 33: '#fbbf24', 34: '#60a5fa', 35: '#f472b6', 36: '#22d3ee', 37: '#e5e7eb' }
+const FG_B: Record<string, string> = { 90: '#6b7280', 91: '#ef4444', 92: '#22c55e', 93: '#eab308', 94: '#3b82f6', 95: '#ec4899', 96: '#06b6d4', 97: '#f9fafb' }
+const BG: Record<string, string> = { 40: '#1f2937', 41: '#7f1d1d', 42: '#14532d', 43: '#713f12', 44: '#1e3a8a', 45: '#701a75', 46: '#155e75', 47: '#374151' }
 
-function ansiToHtml(t) {
+function ansiToHtml(t: string): string {
   const esc = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   let out = ''
   let open = 0
+  // ANSI 转义序列正则(\\x1b 为控制字符,属有意为之)
+  // eslint-disable-next-line no-control-regex
   const re = /\x1b\[([0-9;]*)m/g
   let last = 0
-  let m
+  let m: RegExpExecArray | null = null
   while ((m = re.exec(esc))) {
     out += esc.slice(last, m.index)
     last = re.lastIndex
@@ -181,5 +182,4 @@ function ansiToHtml(t) {
   out += esc.slice(last) + '</span>'.repeat(open)
   return out
 }
-void seq
 </script>

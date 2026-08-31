@@ -53,7 +53,7 @@
       </div>
       <p v-if="!editable" class="text-xs text-muted mt-2">{{ t('composeDetail.notEditable') }}</p>
       <!-- 保存部署过程实时输出 -->
-      <div v-if="saving || output" class="mt-3 code-panel border border-line rounded-lg p-3 max-h-52 overflow-y-auto font-mono text-[11px] whitespace-pre-wrap" :class="saveFailed ? 'text-danger' : 'text-muted'">
+      <div v-if="saving || outputLines.length" class="mt-3 code-panel border border-line rounded-lg p-3 max-h-52 overflow-y-auto font-mono text-[11px] whitespace-pre-wrap" :class="saveFailed ? 'text-danger' : 'text-muted'">
         <template v-if="saving">
           <div class="flex items-center gap-2 mb-1.5 text-brand">
             <span class="inline-block w-3 h-3 border-2 border-brand/30 border-t-brand rounded-full animate-spin" />
@@ -118,7 +118,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -131,36 +131,38 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Card } from '@/components/ui/card'
-import { api, composeStream } from '../api'
-import { containerName, humanPorts } from '../util'
+import { adoptCompose, composeAction, inspectCompose, removeCompose, updateCompose } from '../api'
+import type { ComposeAction } from '../api'
+import { containerName, errorMessage, humanPorts } from '../util'
 import { useConfirm } from '../confirm'
 import { toastErr, toastOk } from '../toast'
+import type { ComposeInspect, ComposeStackStatus, ContainerListItem } from '../types'
 
 const { t } = useI18n()
 const route = useRoute()
-const project = computed(() => route.params.project)
+const project = computed(() => String(route.params.project || ''))
 const confirm = useConfirm()
 
-const data = ref(null)
+const data = ref<ComposeInspect | null>(null)
 const yamlText = ref('')
 const tab = ref('file')
 const saving = ref(false)
 const saveFailed = ref(false)
-const outputLines = ref([])
+const outputLines = ref<string[]>([])
 const adoptOpen = ref(false)
 const adoptText = ref('')
 const adopting = ref(false)
 const adoptErr = ref('')
-let timer = null
+let timer: ReturnType<typeof setInterval> | null = null
 
-const tabs = [
+const tabs: { key: string; labelKey: string }[] = [
   { key: 'file', labelKey: 'composeDetail.tabFile' },
   { key: 'containers', labelKey: 'composeDetail.tabContainers' },
   { key: 'logs', labelKey: 'composeDetail.tabLogs' },
 ]
 
 const editable = computed(() => !!data.value?.yaml)
-const status = computed(() => {
+const status = computed<ComposeStackStatus>(() => {
   const cs = data.value?.containers || []
   if (!cs.length) return 'stopped'
   const running = cs.filter((c) => c.State === 'running').length
@@ -168,25 +170,30 @@ const status = computed(() => {
   if (running === cs.length) return 'running'
   return 'partial'
 })
-const name = (c) => containerName(c)
-const ports = (c) => humanPorts(c.Ports)
+const name = (c: ContainerListItem) => containerName(c)
+const ports = (c: ContainerListItem) => humanPorts(c.Ports)
 
 async function load() {
   try {
-    data.value = await api(`/compose/${project.value}`)
+    data.value = await inspectCompose(project.value)
     yamlText.value = data.value.yaml || ''
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
-async function act(action) {
+async function act(action: string) {
   try {
-    await api(`/compose/${project.value}/${action}`, { method: 'POST' })
-    toastOk({ start: t('compose.toastStarted'), stop: t('compose.toastStopped'), restart: t('compose.toastRestarted') }[action])
+    await composeAction(project.value, action as ComposeAction)
+    const msgs: Record<string, string> = {
+      start: t('compose.toastStarted'),
+      stop: t('compose.toastStopped'),
+      restart: t('compose.toastRestarted'),
+    }
+    toastOk(msgs[action])
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
@@ -195,12 +202,12 @@ async function adopt() {
   adopting.value = true
   adoptErr.value = ''
   try {
-    await api(`/compose/${project.value}/adopt`, { method: 'POST', json: { yaml: adoptText.value } })
+    await adoptCompose(project.value, { yaml: adoptText.value })
     toastOk(t('composeDetail.adopted'))
     adoptOpen.value = false
     load()
   } catch (e) {
-    adoptErr.value = e.message
+    adoptErr.value = errorMessage(e)
   } finally {
     adopting.value = false
   }
@@ -211,32 +218,32 @@ async function save() {
   saveFailed.value = false
   outputLines.value = []
   try {
-    await composeStream(`/compose/${project.value}`, { project: project.value, yaml: yamlText.value }, (line) => {
+    await updateCompose(project.value, { project: project.value, yaml: yamlText.value }, (line) => {
       outputLines.value.push(line)
     })
     toastOk(t('composeDetail.toastDeployOk'))
     load()
   } catch (e) {
     saveFailed.value = true
-    outputLines.value.push(`❌ ${e.message}`)
-    toastErr(e.message)
+    outputLines.value.push(`❌ ${errorMessage(e)}`)
+    toastErr(errorMessage(e))
   } finally {
     saving.value = false
   }
 }
 
-async function down(volumes) {
+async function down(volumes: boolean) {
   const ok = await confirm(t('composeDetail.confirmDown', { project: project.value }), {
     title: t('composeDetail.downTitle'),
     confirmText: t('composeDetail.down'),
   })
   if (!ok) return
   try {
-    await api(`/compose/${project.value}/down${volumes ? '?volumes=true' : ''}`, { method: 'POST' })
+    await composeAction(project.value, 'down', volumes)
     toastOk(t('composeDetail.toastDownOk'))
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
@@ -247,11 +254,11 @@ async function remove() {
   })
   if (!ok) return
   try {
-    await api(`/compose/${project.value}`, { method: 'DELETE' })
+    await removeCompose(project.value)
     toastOk(t('composeDetail.toastRemoved'))
     window.location.href = '/compose'
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
@@ -263,7 +270,9 @@ onMounted(() => {
   load()
   timer = setInterval(load, 8000)
 })
-onBeforeUnmount(() => clearInterval(timer))
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+})
 watch(project, () => {
   tab.value = 'file'
   load()

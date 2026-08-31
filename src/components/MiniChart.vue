@@ -68,44 +68,69 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+// s1/s2 为 props 名,下方同名 computed 是归一化后的序列(script 绑定优先于 props,属有意为之)
+/* eslint-disable vue/no-dupe-keys */
 import { computed, reactive } from 'vue'
 
-const props = defineProps({
-  /** 第一条序列(数值数组) */
-  s1: { type: Array, default: () => [] },
-  /** 第二条序列 */
-  s2: { type: Array, default: () => [] },
-  color1: { type: String, default: '#60a5fa' },
-  color2: { type: String, default: '#ec4899' },
-  emptyText: { type: String, default: '' },
-  /** 图表高度(px) */
-  height: { type: Number, default: 40 },
-  /** 面积填充透明度(0 = 不填充) */
-  fill: { type: Number, default: 0 },
-  /** 折线宽度 */
-  strokeWidth: { type: Number, default: 1.6 },
-  /** 平滑曲线 */
-  smooth: { type: Boolean, default: false },
-  /** 参考线 [{ y, label?, color?, dash? }] */
-  refLines: { type: Array, default: () => [] },
-  /** x 轴时间标签(与序列等长) */
-  labels: { type: Array, default: () => [] },
-  /** 显示坐标轴 */
-  showAxes: { type: Boolean, default: false },
-  /** 悬停 tooltip */
-  showTooltip: { type: Boolean, default: false },
-  /** 系列名(tooltip 用) */
-  name1: { type: String, default: '' },
-  name2: { type: String, default: '' },
-  /** y 值格式化 */
-  yFormatter: { type: Function, default: null },
-  /** y 域上限(null = 自动 = 最大值 * 1.1) */
-  valueMax: { type: Number, default: null },
-  valueMin: { type: Number, default: 0 },
-  /** x 轴刻度数量 */
-  tickCountX: { type: Number, default: 4 },
-})
+const props = withDefaults(
+  defineProps<{
+    /** 第一条序列(数值数组) */
+    s1?: number[]
+    /** 第二条序列 */
+    s2?: number[]
+    color1?: string
+    color2?: string
+    emptyText?: string
+    /** 图表高度(px) */
+    height?: number
+    /** 面积填充透明度(0 = 不填充) */
+    fill?: number
+    /** 折线宽度 */
+    strokeWidth?: number
+    /** 平滑曲线 */
+    smooth?: boolean
+    /** 参考线 [{ y, label?, color?, dash? }] */
+    refLines?: Array<{ y: number; label?: string; color?: string; dash?: string }>
+    /** x 轴时间标签(与序列等长) */
+    labels?: Array<string | number>
+    /** 显示坐标轴 */
+    showAxes?: boolean
+    /** 悬停 tooltip */
+    showTooltip?: boolean
+    /** 系列名(tooltip 用) */
+    name1?: string
+    name2?: string
+    /** y 值格式化 */
+    yFormatter?: ((v: number) => string) | null
+    /** y 域上限(null = 自动 = 最大值 * 1.1) */
+    valueMax?: number | null
+    valueMin?: number
+    /** x 轴刻度数量 */
+    tickCountX?: number
+  }>(),
+  {
+    s1: () => [],
+    s2: () => [],
+    color1: '#60a5fa',
+    color2: '#ec4899',
+    emptyText: '',
+    height: 40,
+    fill: 0,
+    strokeWidth: 1.6,
+    smooth: false,
+    refLines: () => [],
+    labels: () => [],
+    showAxes: false,
+    showTooltip: false,
+    name1: '',
+    name2: '',
+    yFormatter: null,
+    valueMax: null,
+    valueMin: 0,
+    tickCountX: 4,
+  },
+)
 
 const W = 100
 const H = computed(() => props.height)
@@ -123,21 +148,22 @@ const norm = computed(() => {
     max = max * 1.1
   }
   // 截齐到同一长度(与 label 对齐)
-  const pad = (arr) => {
+  const pad = (arr: (number | null)[]): (number | null)[] => {
     const s = arr.slice(-n)
     return new Array(n - s.length).fill(null).concat(s)
   }
   return { a: pad(a), b: pad(b), max, n }
 })
 
-const yPos = (v) => H.value - 2 - (clamp(v, props.valueMin, norm.value.max) / (norm.value.max - props.valueMin || 1)) * (H.value - 8)
-const xPos = (i) => (norm.value.n === 1 ? 0 : (i / (norm.value.n - 1)) * W)
-const clamp = (v, lo, hi) => (v == null ? lo : Math.min(hi, Math.max(lo, v)))
+const yPos = (v: number | null): number =>
+  H.value - 2 - (clamp(v, props.valueMin, norm.value.max) / (norm.value.max - props.valueMin || 1)) * (H.value - 8)
+const xPos = (i: number): number => (norm.value.n === 1 ? 0 : (i / (norm.value.n - 1)) * W)
+const clamp = (v: number | null, lo: number, hi: number): number => (v == null ? lo : Math.min(hi, Math.max(lo, v)))
 const s1 = computed(() => norm.value.a)
 const s2 = computed(() => norm.value.b)
 
 // ---------- 路径 ----------
-function smoothPath(arr) {
+function smoothPath(arr: (number | null)[]): string {
   // Catmull-Rom → cubic Bezier 平滑
   const pts = arr.map((v, i) => [xPos(i), yPos(v)])
   if (pts.length < 3) return 'M' + pts.map((p) => `${p[0]},${p[1]}`).join(' L')
@@ -153,24 +179,24 @@ function smoothPath(arr) {
   }
   return d
 }
-function linePath(arr) {
+function linePath(arr: (number | null)[]): string {
   if (arr.length < 2) return ''
   if (!props.smooth) return 'M' + arr.map((v, i) => `${xPos(i)},${yPos(v)}`).join(' L')
   return smoothPath(arr)
 }
-function fillPoints(arr) {
+function fillPoints(arr: (number | null)[]): string {
   const pts = arr.map((v, i) => [xPos(i), yPos(v)])
   return `${pts.map((p) => `${p[0]},${p[1]}`).join(' ')} ${xPos(pts.length - 1)},${H.value - 2} ${xPos(0)},${H.value - 2}`
 }
 
 // ---------- 坐标轴 ----------
-const yTicks = computed(() => {
+const yTicks = computed<number[]>(() => {
   if (!props.showAxes) return []
   const [lo, hi] = [props.valueMin, norm.value.max]
   if (props.valueMax === 100 && props.valueMin === 0) return [0, 25, 50, 75, 100]
   return Array.from({ length: 5 }, (_, i) => lo + ((hi - lo) * i) / 4)
 })
-const xTicks = computed(() => {
+const xTicks = computed<Array<{ index: number; label: string; anchor: string }>>(() => {
   if (!props.showAxes || !norm.value.n) return []
   const m = Math.max(2, props.tickCountX)
   const idxs = Array.from({ length: m }, (_, i) => Math.round((i * (norm.value.n - 1)) / (m - 1)))
@@ -180,20 +206,28 @@ const xTicks = computed(() => {
     anchor: k === 0 ? 'start' : k === m - 1 ? 'end' : 'middle',
   }))
 })
-const fmtY = (v) => (props.yFormatter ? props.yFormatter(v) : String(Math.round(v)))
+const fmtY = (v: number): string => (props.yFormatter ? props.yFormatter(v) : String(Math.round(v)))
 
 // ---------- tooltip ----------
-const tip = reactive({ show: false, x: 0, y: 0, label: '', rows: [] })
-function onMove(ev) {
+const tip = reactive<{ show: boolean; x: number; y: number; label: string; rows: Array<{ name: string; color: string; text: string }> }>({
+  show: false,
+  x: 0,
+  y: 0,
+  label: '',
+  rows: [],
+})
+function onMove(ev: MouseEvent) {
   if (!props.showTooltip || !norm.value.n) return
-  const rect = ev.currentTarget.getBoundingClientRect()
+  const rect = (ev.currentTarget as HTMLElement).getBoundingClientRect()
   const ratio = W / rect.width
   const mx = (ev.clientX - rect.left) * ratio
   const idx = clamp(Math.round((mx / W) * (norm.value.n - 1)), 0, norm.value.n - 1)
   const label = props.labels[idx] ?? ''
-  const rows = []
-  if (s1.value[idx] != null) rows.push({ name: props.name1, color: props.color1, text: (props.yFormatter || fmtY)(s1.value[idx]) })
-  if (s2.value[idx] != null) rows.push({ name: props.name2, color: props.color2, text: (props.yFormatter || fmtY)(s2.value[idx]) })
+  const rows: Array<{ name: string; color: string; text: string }> = []
+  const va = s1.value[idx]
+  if (va != null) rows.push({ name: props.name1, color: props.color1, text: (props.yFormatter || fmtY)(va) })
+  const vb = s2.value[idx]
+  if (vb != null) rows.push({ name: props.name2, color: props.color2, text: (props.yFormatter || fmtY)(vb) })
   tip.show = true
   tip.label = String(label)
   tip.rows = rows

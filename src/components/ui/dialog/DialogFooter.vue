@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { DialogClose } from "reka-ui";
 import { cn } from "@/lib/utils";
 import { Button } from '@/components/ui/button';

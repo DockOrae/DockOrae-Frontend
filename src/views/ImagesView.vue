@@ -96,7 +96,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Icon from '../components/Icon.vue'
@@ -107,17 +107,18 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { api, pullImageStream } from '../api'
-import { shortId, formatDate, formatBytes } from '../util'
+import { errorMessage, formatBytes, formatDate, shortId } from '../util'
 import { useConfirm } from '../confirm'
 import { toastErr, toastOk } from '../toast'
+import type { ImageListItem, ImagePruneReport, PullProgressLine } from '../types'
 
 const { t } = useI18n()
-const images = ref([])
+const images = ref<ImageListItem[]>([])
 const keyword = ref('')
 const pullOpen = ref(false)
 const pulling = ref(false)
 const pullForm = ref({ from_image: '', tag: 'latest' })
-const layers = ref({})
+const layers = ref<Record<string, { id: string; status: string; progress: string; pct: number }>>({})
 const overall = ref('')
 const pullError = ref('')
 const detailOpen = ref(false)
@@ -140,11 +141,11 @@ const filtered = computed(() => {
   return images.value.filter((i) => (i.RepoTags || []).join(' ').toLowerCase().includes(k) || i.Id.includes(k))
 })
 
-const tag = (i) => (i.RepoTags && i.RepoTags.length ? i.RepoTags[0] : `<none>:<none>`)
-const fmt = (n) => formatBytes(n, 0)
+const tag = (i: ImageListItem) => (i.RepoTags && i.RepoTags.length ? i.RepoTags[0] : `<none>:<none>`)
+const fmt = (n: number) => formatBytes(n, 0)
 
 async function load() {
-  images.value = await api('/images')
+  images.value = await api<ImageListItem[]>('/images')
 }
 
 async function pull() {
@@ -155,7 +156,7 @@ async function pull() {
   try {
     await pullImageStream(
       { from_image: pullForm.value.from_image, tag: pullForm.value.tag || 'latest' },
-      (line) => {
+      (line: PullProgressLine) => {
         const id = line.id || ''
         const status = line.status || ''
         if (line.error) {
@@ -183,8 +184,8 @@ async function pull() {
     pullOpen.value = false
     load()
   } catch (e) {
-    pullError.value = e.message
-    toastErr(e.message)
+    pullError.value = errorMessage(e)
+    toastErr(errorMessage(e))
   } finally {
     pulling.value = false
   }
@@ -198,7 +199,7 @@ function closePull() {
   pullError.value = ''
 }
 
-async function remove(img) {
+async function remove(img: ImageListItem) {
   const name = tag(img)
   const ok = await confirm(t('images.confirmDelete', { name }), {
     title: t('images.confirmDeleteTitle'),
@@ -210,17 +211,17 @@ async function remove(img) {
     toastOk(t('common.deleted'))
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
-async function showDetail(img) {
+async function showDetail(img: ImageListItem) {
   try {
-    const d = await api(`/images/${img.Id}`)
+    const d = await api<Record<string, unknown>>(`/images/${img.Id}`)
     detailJson.value = JSON.stringify(d, null, 2)
     detailOpen.value = true
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 
@@ -231,13 +232,13 @@ async function prune() {
   })
   if (!ok) return
   try {
-    const r = await api('/images/prune', { method: 'POST' })
+    const r = await api<ImagePruneReport>('/images/prune', { method: 'POST' })
     const n = (r.ImagesDeleted || []).length
     if (n > 0) toastOk(t('images.toastPruned', { count: n, space: fmt(r.SpaceReclaimed || 0) }))
     else toastOk(t('images.toastPrunedNone'))
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr(errorMessage(e))
   }
 }
 

@@ -92,11 +92,11 @@
             <Select v-else-if="p.type === 'select'" v-model="params[p.key]">
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="o in p.options" :key="o.value" :value="o.value">{{ o.label }}</SelectItem>
+                <SelectItem v-for="o in p.options || []" :key="o.value" :value="o.value">{{ o.label }}</SelectItem>
               </SelectContent>
             </Select>
             <label v-else-if="p.type === 'checkbox'" class="flex items-center gap-2 text-xs cursor-pointer select-none w-fit">
-              <input type="checkbox" class="accent-brand w-4 h-4" :checked="params[p.key] === 'true'" @change="params[p.key] = $event.target.checked ? 'true' : 'false'" />
+              <input type="checkbox" class="accent-brand w-4 h-4" :checked="params[p.key] === 'true'" @change="params[p.key] = ($event.target as HTMLInputElement).checked ? 'true' : 'false'" />
               <span>{{ paramLabel(p) }}</span>
             </label>
             <Textarea v-else-if="p.type === 'textarea'" v-model="params[p.key]" rows="3" class="text-[12px]" spellcheck="false" />
@@ -137,7 +137,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -151,17 +151,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { api } from '../api'
 import { useConfirm } from '../confirm'
 import { toastErr, toastOk } from '../toast'
+import type { AppDetail, AppItem, AppListResponse, AppOperationResponse, AppParam, AppPreviewResponse } from '../types'
 
 const { t, locale } = useI18n()
 const router = useRouter()
-const apps = ref([])
-const categories = ref([])
+const apps = ref<AppItem[]>([])
+const categories = ref<string[]>([])
 const keyword = ref('')
 const cat = ref('')
 
 // 应用商店分类翻译:DockOrae-Apps data.yml 顶层 tags 是中文原始值,
 // 前端映射到 i18n key(简中/繁中/英文),未知分类原样显示
-const CAT_KEYS = {
+const CAT_KEYS: Record<string, string> = {
   实用工具: 'appStore.catTools',
   AI: 'appStore.catAI',
   数据库: 'appStore.catDatabase',
@@ -186,12 +187,12 @@ const CAT_KEYS = {
   存储: 'appStore.catStorage2',
   运维监控: 'appStore.catOpsMonitor',
 }
-function catLabel(c) {
+function catLabel(c: string): string {
   return CAT_KEYS[c] ? t(CAT_KEYS[c]) : c
 }
-const detail = ref(null)
-const params = reactive({})
-const showPwd = reactive({})
+const detail = ref<AppDetail | null>(null)
+const params = reactive<Record<string, string>>({})
+const showPwd = reactive<Record<string, boolean>>({})
 const installing = ref(false)
 const installErr = ref('')
 const busy = ref(false)
@@ -199,7 +200,7 @@ const syncing = ref(false)
 const editCompose = ref(false)
 const composeText = ref('')
 const composeDirty = ref(false)
-let pollTimer = null
+let pollTimer: ReturnType<typeof setInterval> | null = null
 const confirm = useConfirm()
 
 const filtered = computed(() => {
@@ -214,9 +215,9 @@ const filtered = computed(() => {
   return list
 })
 
-const iconFailed = reactive({})
+const iconFailed = reactive<Record<string, boolean>>({})
 
-function iconUrl(key) {
+function iconUrl(key: string): string {
   return `/api/apps/icon/${key}`
 }
 
@@ -228,18 +229,18 @@ const validParams = computed(() => {
   return (detail.value.params || []).every((p) => !p.required || (params[p.key] || '').trim())
 })
 
-function paramLabel(p) {
-  return (locale.value || '').startsWith('zh') ? p.label_zh || p.label_en : p.label_en || p.label_zh
+function paramLabel(p: AppParam): string {
+  return (locale.value || '').startsWith('zh') ? p.label_zh || p.label_en || '' : p.label_en || p.label_zh || ''
 }
 
 // 参数提示文案:key 缺失时兜底显示 hint 原文,避免暴露 appStore.hint_xxx
-function hintText(p) {
+function hintText(p: AppParam): string {
   const k = 'appStore.hint_' + p.hint
   const s = t(k)
-  return s === k ? p.hint : s
+  return s === k ? (p.hint || '') : s
 }
 
-function genRandom() {
+function genRandom(): string {
   const chars = 'abcdef0123456789'
   let s = ''
   for (let i = 0; i < 16; i++) s += chars[Math.floor(Math.random() * chars.length)]
@@ -248,7 +249,7 @@ function genRandom() {
 
 async function load() {
   try {
-    const r = await api('/apps')
+    const r = await api<AppListResponse>('/apps')
     apps.value = r.apps || []
     categories.value = r.categories || []
     // 空列表(尚未同步完成)时自动轮询,数据出现后停止
@@ -259,7 +260,7 @@ async function load() {
       pollTimer = null
     }
   } catch (e) {
-    toastErr(e.message)
+    toastErr((e as Error).message)
   }
 }
 
@@ -273,27 +274,27 @@ onBeforeUnmount(() => {
 async function syncApps() {
   syncing.value = true
   try {
-    await api('/apps/sync', { method: 'POST' })
+    await api<AppOperationResponse>('/apps/sync', { method: 'POST' })
     toastOk(t('appStore.syncDone'))
     await load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr((e as Error).message)
   } finally {
     syncing.value = false
   }
 }
 
-async function openDetail(a) {
+async function openDetail(a: AppItem) {
   installErr.value = ''
   editCompose.value = false
   composeText.value = ''
   composeDirty.value = false
   try {
-    const d = await api(`/apps/${a.key}`)
+    const d = await api<AppDetail>(`/apps/${a.key}`)
     detail.value = { ...a, ...d }
     for (const p of (d.params || [])) params[p.key] = p.default || ''
   } catch (e) {
-    toastErr(e.message)
+    toastErr((e as Error).message)
   }
 }
 
@@ -313,76 +314,84 @@ watch(
 )
 
 async function refreshPreview() {
+  if (!detail.value) return
   try {
-    const r = await api(`/apps/${detail.value.key}/preview`, { method: 'POST', json: { params: { ...params } } })
+    const r = await api<AppPreviewResponse>(`/apps/${detail.value.key}/preview`, { method: 'POST', json: { params: { ...params } } })
     composeText.value = r.yaml || ''
     composeDirty.value = false
   } catch (e) {
-    toastErr(e.message)
+    toastErr((e as Error).message)
   }
 }
 
 async function install() {
+  const key = detail.value?.key
+  if (!key) return
   installing.value = true
   installErr.value = ''
   try {
-    await api(`/apps/${detail.value.key}/install`, {
+    await api<AppOperationResponse>(`/apps/${key}/install`, {
       method: 'POST',
       json: { params: { ...params }, yaml: editCompose.value ? composeText.value : '' },
     })
-    toastOk(t('appStore.toastInstalled', { name: detail.value.name }))
+    toastOk(t('appStore.toastInstalled', { name: detail.value?.name }))
     detail.value = null
     load()
   } catch (e) {
-    installErr.value = e.message
+    installErr.value = (e as Error).message
   } finally {
     installing.value = false
   }
 }
 
 async function uninstall() {
-  const ok = await confirm(t('appStore.confirmUninstall', { name: detail.value.name }), {
+  const ok = await confirm(t('appStore.confirmUninstall', { name: detail.value?.name }), {
     title: t('appStore.uninstall'),
     confirmText: t('appStore.uninstall'),
   })
   if (!ok) return
+  const key = detail.value?.key
+  if (!key) return
   busy.value = true
   try {
-    await api(`/apps/${detail.value.key}/uninstall`, { method: 'POST' })
+    await api<AppOperationResponse>(`/apps/${key}/uninstall`, { method: 'POST' })
     toastOk(t('common.deleted'))
     detail.value = null
     load()
   } catch (e) {
-    toastErr(e.message)
+    toastErr((e as Error).message)
   } finally {
     busy.value = false
   }
 }
 
 async function upgrade() {
+  const key = detail.value?.key
+  if (!key) return
   busy.value = true
   try {
-    await api(`/apps/${detail.value.key}/upgrade`, { method: 'POST' })
+    await api<AppOperationResponse>(`/apps/${key}/upgrade`, { method: 'POST' })
     toastOk(t('appStore.toastUpgraded'))
   } catch (e) {
-    toastErr(e.message)
+    toastErr((e as Error).message)
   } finally {
     busy.value = false
   }
 }
 
 // 已安装卡片上的快速更新按钮
-async function quickUpgrade(a) {
+async function quickUpgrade(a: AppItem) {
   try {
-    await api(`/apps/${a.key}/upgrade`, { method: 'POST' })
+    await api<AppOperationResponse>(`/apps/${a.key}/upgrade`, { method: 'POST' })
     toastOk(t('appStore.toastUpgraded'))
   } catch (e) {
-    toastErr(e.message)
+    toastErr((e as Error).message)
   }
 }
 
 function goCompose() {
-  const key = detail.value.key
+  const key = detail.value?.key
+  if (!key) return
   detail.value = null
   router.push(`/compose/${key}`)
 }
