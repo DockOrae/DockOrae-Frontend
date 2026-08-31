@@ -788,6 +788,7 @@ unboundDesc: '本機已解綁,Key 保留,可重新啟用。',
     togglePwd: '顯示/隱藏密碼',
     autoGenerate: '留空自動產生',
     generate: '產生',
+  },
   agent: {
     swap: {
       settings: 'Swap 設定',
@@ -800,6 +801,5 @@ unboundDesc: '本機已解綁,Key 保留,可重新啟用。',
       disabled: '未啟用 · 點擊設定建立',
     },
     invalidAction: '無效的 Swap 操作',
-  },
   },
 }

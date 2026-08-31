@@ -788,6 +788,7 @@ unboundDesc: 'This device is unbound; the key is kept and can be reactivated.',
     togglePwd: 'Show/Hide password',
     autoGenerate: 'Leave empty to auto-generate',
     generate: 'Generate',
+  },
   agent: {
     swap: {
       settings: 'Swap Settings',
@@ -800,6 +801,5 @@ unboundDesc: 'This device is unbound; the key is kept and can be reactivated.',
       disabled: 'Not enabled · Click to create',
     },
     invalidAction: 'Invalid swap action',
-  },
   },
 }
