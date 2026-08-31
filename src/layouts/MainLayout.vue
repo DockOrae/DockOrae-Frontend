@@ -221,16 +221,25 @@ onMounted(() => {
 setInterval(loadUpdate, 10 * 60 * 1000)
 
 // 3x-ui 交互:默认折叠,悬停展开;图钉固定后保持展开
+// 防闪屏:鼠标离开侧边栏后延迟收起(300ms),避免滑向内容区瞬间展开/收起动画叠加导致布局跳动
 const hovered = ref(false)
 const pinned = ref(localStorage.getItem(PINNED_KEY) === 'true')
 const expanded = computed(() => hovered.value || pinned.value)
 const year = new Date().getFullYear()
+let siderLeaveTimer: ReturnType<typeof setTimeout> | null = null
 
 function onEnter() {
+  if (siderLeaveTimer) {
+    clearTimeout(siderLeaveTimer)
+    siderLeaveTimer = null
+  }
   hovered.value = true
 }
 function onLeave() {
-  hovered.value = false
+  if (siderLeaveTimer) clearTimeout(siderLeaveTimer)
+  siderLeaveTimer = setTimeout(() => {
+    hovered.value = false
+  }, 300)
 }
 function togglePinned() {
   pinned.value = !pinned.value
@@ -266,6 +275,9 @@ const navs: NavItem[] = [
   { to: '/networks', labelKey: 'nav.networks', icon: 'network' },
   { to: '/volumes', labelKey: 'nav.volumes', icon: 'volume' },
   { to: '/compose', labelKey: 'nav.compose', icon: 'compose' },
+  // 宿主机管理(§55/§56):终端 / 文件,位于「面板设置」紧上方
+  { to: '/terminal', labelKey: 'nav.terminal', icon: 'terminal' },
+  { to: '/files', labelKey: 'nav.files', icon: 'folder' },
 ]
 
 // 面板设置子菜单(仿 3x-ui:常规/安全/TG/邮件/许可证/关于;证书与日期时间在常规页内横向 tab)

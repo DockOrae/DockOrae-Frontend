@@ -4,6 +4,7 @@
  */
 export * from './client'
 export * from './agent'
+export * from './files'
 export * from './containers'
 export * from './compose'
 export * from './system'

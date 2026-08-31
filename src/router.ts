@@ -27,6 +27,8 @@ const routes: RouteRecordRaw[] = [
       { path: 'volumes', name: 'volumes', component: () => import('./views/VolumesView.vue'), meta: { title: 'nav.volumes' } },
       { path: 'compose', name: 'compose', component: () => import('./views/ComposeView.vue'), meta: { title: 'nav.compose' } },
       { path: 'compose/:project', name: 'compose-detail', component: () => import('./views/ComposeDetailView.vue'), meta: { title: 'composeDetail.title' } },
+      { path: 'terminal', name: 'host-terminal', component: () => import('./views/TerminalView.vue'), meta: { title: 'terminal.hostTitle' } },
+      { path: 'files', name: 'host-files', component: () => import('./views/FilesView.vue'), meta: { title: 'files.title' } },
       { path: 'settings', name: 'settings', component: () => import('./views/SettingsView.vue'), meta: { title: 'nav.settings' } },
     ],
   },
