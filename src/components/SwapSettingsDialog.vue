@@ -64,12 +64,15 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { swapAction } from '@/api/agent'
+import { toastOk } from '@/toast'
+import { useConfirm } from '@/confirm'
 import type { SwapStatus } from '@/types'
 
 const props = defineProps<{ open: boolean; status: SwapStatus | null }>()
 const emit = defineEmits<{ (e: 'update:open', v: boolean): void; (e: 'updated'): void }>()
 
 const { t } = useI18n()
+const confirm = useConfirm()
 
 /** 预设(§13:禁止擅自增加 8G/16G/32G) */
 const presets = [
@@ -123,6 +126,7 @@ async function onApply() {
     await swapAction({ action, size_mb: size, confirm: true })
     emit('update:open', false)
     emit('updated') // 父组件重新请求 swap.status 更新卡片
+    toastOk(t(action === 'create' ? 'agent.swap.created' : 'agent.swap.updated', { size: fmtMB(size * 1024 * 1024) }))
   } catch (e) {
     error.value = (e as Error).message
   } finally {
@@ -130,15 +134,17 @@ async function onApply() {
   }
 }
 
-/** 删除 swap(危险操作,需确认;成功后父组件重查状态刷新卡片) */
+/** 删除 swap(危险操作,项目确认弹窗二次确认;成功后父组件重查状态刷新卡片) */
 async function onDelete() {
-  if (!window.confirm(t('agent.swap.deleteConfirm'))) return
+  const ok = await confirm(t('agent.swap.deleteConfirm'), { title: t('agent.swap.delete'), danger: true })
+  if (!ok) return
   busy.value = true
   error.value = ''
   try {
     await swapAction({ action: 'delete', confirm: true })
     emit('update:open', false)
     emit('updated')
+    toastOk(t('agent.swap.deleted'))
   } catch (e) {
     error.value = (e as Error).message
   } finally {
