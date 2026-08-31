@@ -1,36 +1,36 @@
 # DockOrae Frontend
 
-DockOrae 面板的**前端仓库**(独立维护,与后端 `DockOrae/DockOrae` 分离)。
+The **web frontend** of the [DockOrae](https://github.com/DockOrae/DockOrae) Docker management panel — maintained as a standalone repository, decoupled from the Go backend.
 
-## 技术栈
+## Tech Stack
 
-- Vue 3 + TypeScript + Vite + vue-i18n(简体中文 / 繁體中文 / English)
-- Tailwind CSS + shadcn-vue(Reka UI)组件
-- lucide 图标
+- **Vue 3 + TypeScript + Vite** — fully type-checked (`vue-tsc`, 0 errors)
+- **Tailwind CSS 4** + **shadcn-vue** components built on **Reka UI**
+- **vue-i18n** — 简体中文 / 繁體中文 / English
+- **lucide** icons
 
-## 开发
+## Development
 
 ```bash
 npm install
-npm run dev         # vite :5173,API 代理到 :8080(需本地后端已启动)
-npm run typecheck   # vue-tsc 全量类型检查(0 errors)
+npm run dev         # vite :5173,API proxied to :8080 (requires a running backend)
+npm run typecheck   # vue-tsc full type check (0 errors)
 npm run lint        # ESLint
-npm run build       # vue-tsc + 产物 dist/(go:embed 嵌入后端用)
-npm run i18n-check  # 校验 3 语言 key 一致性
+npm run build       # vue-tsc + dist/ output (embedded into the Go binary)
+npm run i18n-check  # verify key parity across the 3 locales
 ```
 
-## 与后端集成
+## Integration with the Backend
 
-后端(`DockOrae/DockOrae`)构建时通过 CI 拉取本仓库构建 `dist/`,拷贝到
-`web/dist` 后由 `web/embed.go` 的 `//go:embed all:dist` 嵌入 Go 二进制。
+The backend ([DockOrae/DockOrae](https://github.com/DockOrae/DockOrae)) pulls this repository's `dist/` during CI: the frontend publishes a rolling release asset (`dockorae-frontend-dist-v<version>-<sha>.tar.gz`), which the backend downloads and embeds via `web/embed.go` (`//go:embed all:dist`).
 
-- 前端源码改动 → 推送本仓库 master
-- 后端镜像/发布构建自动使用本仓库 master 最新代码
+- Frontend source changes → push to this repo's `master`
+- Backend image / release builds automatically use the latest `master` code
 
-## 语言
+## Languages
 
-`src/locales/` 下 14 个语言文件必须 key 全量一致(`npm run check-i18n` 校验)。
+`src/locales/` holds 3 locale files (en / zh-CN / zh-TW) which must stay key-aligned (`npm run i18n-check` enforces this).
 
 ## License
 
-见后端仓库主 README。
+See the [backend repository](https://github.com/DockOrae/DockOrae) main README.
