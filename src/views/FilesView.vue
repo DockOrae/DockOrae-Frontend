@@ -54,6 +54,12 @@
           <Icon name="upload" size="13" /> {{ t('files.upload') }}
         </Button>
         <span class="w-px h-4 bg-line mx-1" />
+        <!-- 视图切换:列表 / 大图标 -->
+        <Button size="sm" variant="ghost" :title="t('files.viewMode')" @click="toggleViewMode">
+          <Icon :name="viewMode === 'list' ? 'grid' : 'list'" size="13" />
+          {{ viewMode === 'list' ? t('files.viewGrid') : t('files.viewList') }}
+        </Button>
+        <span class="w-px h-4 bg-line mx-1" />
         <Button size="sm" variant="ghost" @click="openTrash">
           <Icon name="trash" size="13" /> {{ t('files.recycleBin') }}
         </Button>
@@ -212,7 +218,7 @@
           <span class="text-right mr-[56px]">{{ t('files.colActions') }}</span>
         </div>
 
-            <div class="list-body flex-1 overflow-y-auto" @contextmenu.prevent="onListContext" @click="onListClick" @dragover.prevent @drop.prevent="onDrop">
+            <div class="list-body flex-1 overflow-y-auto" @contextmenu.prevent="onListContext" @click="onListClick" @dragover.prevent @drop.prevent="onDrop" @scroll.passive="onListScroll">
               <div v-if="loading" class="p-10 text-center text-muted text-[13px] flex items-center justify-center gap-2">
                 <Icon name="refresh" size="14" class="spin" /> {{ t('files.loading') }}
               </div>
@@ -222,15 +228,23 @@
               <div v-else-if="filtered.length === 0" class="p-10 text-center text-muted text-[13px]">
                 {{ search ? t('files.searchEmpty') : t('files.empty') }}
               </div>
-              <div
-                v-for="e in filtered"
-                :key="e.path"
-                class="list-row group grid grid-cols-[minmax(0,1fr)_76px_150px_110px_150px_80px_150px] gap-2 px-3 h-10 items-center text-[13px] cursor-default select-none"
-                :class="{ selected: isSelected(e) }"
-                @click="onRowClick(e, $event)"
-                @dblclick="open(e)"
-                @contextmenu.prevent="onRowContext(e, $event)"
-              >
+
+              <!-- 列表模式 -->
+              <template v-else-if="viewMode === 'list'">
+                <div
+                  v-for="e in filtered"
+                  :key="e.path"
+                  class="list-row group grid grid-cols-[minmax(0,1fr)_76px_150px_110px_150px_80px_150px] gap-2 px-3 h-10 items-center text-[13px] cursor-default select-none"
+                  :class="{ selected: isSelected(e), 'drop-target': dragOverPath === e.path }"
+                  draggable="true"
+                  @click="onRowClick(e, $event)"
+                  @dblclick="open(e)"
+                  @contextmenu.prevent="onRowContext(e, $event)"
+                  @dragstart="onRowDragStart(e, $event)"
+                  @dragover.stop.prevent="onRowDragOver(e)"
+                  @dragleave="onRowDragLeave"
+                  @drop.stop.prevent="onDropToDir(e, $event)"
+                >
                 <div class="flex items-center gap-2 min-w-0">
                   <span
                     class="w-4 h-4 rounded-[5px] border flex items-center justify-center shrink-0"
@@ -246,15 +260,7 @@
                   {{ permOctal(e) }}
                 </button>
                 <span class="hidden md:block text-muted text-[12px] truncate">{{ e.owner || '—' }} / {{ e.group || '—' }}</span>
-                <button
-                  v-if="e.type === 'directory'"
-                  type="button"
-                  class="text-[12px] text-brand/80 hover:text-brand text-left"
-                  :class="{ 'opacity-50 pointer-events-none': dirSizing.has(e.path) }"
-                  @click.stop="calcDirSize(e)"
-                >
-                  {{ dirSizing.has(e.path) ? t('files.calculating') : dirSizeMap.has(e.path) ? formatBytes(dirSizeMap.get(e.path)!) : t('files.calculate') }}
-                </button>
+                <span v-if="e.type === 'directory'" class="text-muted text-[12px]">—</span>
                 <span v-else class="text-muted text-[12px]">{{ formatBytes(e.size) }}</span>
                 <span class="hidden sm:block text-muted text-[12px]">{{ formatTime(e.modified_at) }}</span>
                 <span class="hidden lg:block text-muted text-[12px]">—</span>
@@ -282,25 +288,52 @@
                   </DropdownMenu>
                 </span>
               </div>
+                </template>
+
+                <!-- 大图标模式(图片懒加载缩略图,§7/§24) -->
+                <div v-else class="grid grid-cols-[repeat(auto-fill,minmax(118px,1fr))] gap-2 p-3">
+                  <div
+                    v-for="e in filtered"
+                    :key="e.path"
+                    class="grid-item group flex flex-col items-center gap-1.5 rounded-xl border border-line p-3 cursor-default select-none overflow-hidden"
+                    :class="{ selected: isSelected(e), 'drop-target': dragOverPath === e.path }"
+                    draggable="true"
+                    @click="onRowClick(e, $event)"
+                    @dblclick="open(e)"
+                    @contextmenu.prevent="onRowContext(e, $event)"
+                    @dragstart="onRowDragStart(e, $event)"
+                    @dragover.stop.prevent="onRowDragOver(e)"
+                    @dragleave="onRowDragLeave"
+                    @drop.stop.prevent="onDropToDir(e, $event)"
+                  >
+                    <img
+                      v-if="isImage(e)"
+                      :src="filePreviewUrl(e.path)"
+                      loading="lazy"
+                      class="w-16 h-16 rounded-lg object-cover border border-line"
+                      alt=""
+                      draggable="false"
+                    />
+                    <div v-else class="w-16 h-16 flex items-center justify-center">
+                      <Icon :name="iconFor(e)" size="34" :class="iconColor(e)" />
+                    </div>
+                    <span class="w-full truncate text-center text-[12px]" :title="e.name">{{ e.name }}</span>
+                  </div>
+                </div>
+
+                <!-- 分页加载提示(§24:首屏限载,滚动追加) -->
+                <div v-if="!loading && !loadingMore && total > 0 && entries.length < total" class="py-2 text-center text-[11.5px] text-muted">
+                  {{ t('files.loadedCount', { n: entries.length, m: total }) }} — {{ t('files.scrollMore') }}
+                </div>
+                <div v-if="loadingMore" class="py-2 text-center text-muted text-[12px] flex items-center justify-center gap-2">
+                  <Icon name="refresh" size="12" class="spin" /> {{ t('files.loading') }}
+                </div>
             </div>
           </div>
 
-      <!-- 底部统计(1Panel:目录/文件数量 + 当前目录大小) -->
+      <!-- 底部统计(目录/文件数量;当前目录大小 KPanel 无 dirsize 端点,显示 —) -->
       <div class="flex items-center gap-3 text-[12px] text-muted mt-2 shrink-0">
         <span>{{ t('files.dirFileNum', { dir: dirNum, file: fileNum }) }}</span>
-        <span class="flex items-center gap-1">
-          {{ t('files.currentDirSize') }}
-          <button
-            v-if="dirTotalSize === -1"
-            type="button"
-            class="text-brand/80 hover:text-brand"
-            :disabled="calcDirTotal"
-            @click="calcDirTotalSize"
-          >
-            {{ calcDirTotal ? t('files.calculating') : t('files.calculate') }}
-          </button>
-          <span v-else>{{ formatBytes(dirTotalSize) }}</span>
-        </span>
       </div>
     </template>
 
@@ -356,23 +389,16 @@
       </div>
     </Modal>
 
-    <!-- 删除确认(回收站开启:移入回收站 + 强制删除选项;关闭:永久删除警告) -->
+    <!-- 删除确认(KPanel:固定移入回收站) -->
     <Modal :model-value="del.open" :title="t('files.deleteTitle')" @close="del.open = false" @update:model-value="(v) => (del.open = v)">
       <div class="space-y-3">
-        <div
-          class="rounded-lg border px-3 py-2.5 text-[13px] flex items-start gap-2"
-          :class="trashEnabled ? 'border-line bg-surface2 text-muted' : 'border-danger/40 bg-danger/10 text-danger'"
-        >
-          <Icon :name="trashEnabled ? 'info' : 'alert'" size="14" class="mt-0.5 shrink-0" />
+        <div class="rounded-lg border border-line bg-surface2 px-3 py-2.5 text-[13px] flex items-start gap-2">
+          <Icon name="info" size="14" class="mt-0.5 shrink-0" />
           <div>
-            <div>{{ trashEnabled ? t('files.deleteToTrash') : t('files.deletePermanent') }}</div>
+            <div>{{ t('files.deleteToTrash') }}</div>
             <div v-if="hasDirSel" class="mt-1 text-[12px] opacity-80">{{ t('files.deleteRecursive') }}</div>
           </div>
         </div>
-        <label v-if="trashEnabled" class="flex items-center gap-2 text-[13px] cursor-pointer select-none">
-          <input v-model="del.force" type="checkbox" class="w-4 h-4 accent-[var(--color-brand)]" />
-          {{ t('files.forceDelete') }}
-        </label>
         <div class="max-h-44 overflow-y-auto border border-line rounded-lg divide-y divide-line">
           <div v-for="e in del.items" :key="e.path" class="px-3 py-2 text-[12.5px] break-all">
             {{ e.path }}
@@ -385,7 +411,7 @@
       </div>
     </Modal>
 
-    <!-- 回收站 -->
+    <!-- 回收站(KPanel:固定 XDG 回收站,无开关) -->
     <Modal :model-value="trashOpen" :title="t('files.recycleBin')" size="2xl" @close="trashOpen = false" @update:model-value="(v) => (trashOpen = v)">
       <div class="space-y-3">
         <div class="flex items-center gap-2 flex-wrap">
@@ -398,13 +424,6 @@
           <Button size="sm" variant="ghost" :disabled="trashItems.length === 0" @click="doTrashEmpty">
             <Icon name="trash" size="13" /> {{ t('files.trashEmpty') }}
           </Button>
-          <div class="ml-auto flex items-center gap-2 text-[13px]">
-            <span class="text-muted">{{ t('files.trashEnabled') }}</span>
-            <Switch :model-value="trashEnabled" @update:model-value="toggleTrash" />
-          </div>
-        </div>
-        <div class="text-[12px] text-muted">
-          {{ t('files.trashDir') }}: <span class="font-mono">{{ trashDir }}</span>
         </div>
         <div v-if="trashItems.length === 0" class="py-10 text-center text-muted text-[13px]">
           {{ t('files.trashEmptyHint') }}
@@ -419,21 +438,21 @@
           </div>
           <div
             v-for="it in trashItems"
-            :key="it.name"
+            :key="it.id"
             class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_80px_150px_36px] gap-2 px-3 h-10 items-center text-[13px] hover:bg-surface2 cursor-pointer"
-            :class="{ 'bg-brand/10': trashSel.has(it.name) }"
-            @click="toggleTrashSel(it.name)"
+            :class="{ 'bg-brand/10': trashSel.has(it.id) }"
+            @click="toggleTrashSel(it.id)"
           >
             <span class="flex items-center gap-2 min-w-0 truncate">
-              <Icon :name="it.is_dir ? 'folder' : 'fileText'" size="14" :class="it.is_dir ? 'text-brand' : 'text-muted'" class="shrink-0" />
+              <Icon :name="it.kind === 'directory' ? 'folder' : 'fileText'" size="14" :class="it.kind === 'directory' ? 'text-brand' : 'text-muted'" class="shrink-0" />
               <span class="truncate">{{ it.name }}</span>
             </span>
-            <span class="truncate text-muted text-[12px] break-all">{{ it.source_path }}</span>
-            <span class="text-muted text-[12px]">{{ it.is_dir ? t('files.sizeDir') : formatBytes(it.size) }}</span>
-            <span class="text-muted text-[12px]">{{ formatTime(it.delete_time) }}</span>
+            <span class="truncate text-muted text-[12px] break-all">{{ it.originalPath || it.name }}</span>
+            <span class="text-muted text-[12px]">{{ it.kind === 'directory' ? t('files.sizeDir') : formatBytes(it.sizeBytes) }}</span>
+            <span class="text-muted text-[12px]">{{ formatTime(it.deletedAt) }}</span>
             <span class="flex items-center justify-center">
-              <span class="w-4 h-4 rounded-[5px] border flex items-center justify-center" :class="trashSel.has(it.name) ? 'bg-brand border-brand' : 'border-line'">
-                <Icon v-if="trashSel.has(it.name)" name="check" size="10" class="text-white" />
+              <span class="w-4 h-4 rounded-[5px] border flex items-center justify-center" :class="trashSel.has(it.id) ? 'bg-brand border-brand' : 'border-line'">
+                <Icon v-if="trashSel.has(it.id)" name="check" size="10" class="text-white" />
               </span>
             </span>
           </div>
@@ -493,7 +512,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Icon from '../components/Icon.vue'
 import Modal from '../components/Modal.vue'
 import FileContextMenu, { type CtxMenuItem } from '../components/files/FileContextMenu.vue'
@@ -503,15 +522,13 @@ import FileTerminalDialog from '../components/files/FileTerminalDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
-  listFiles, touchFile, mkdirFile, renameFile, copyFile, moveFile, removeFiles,
-  compressFiles, extractFile, searchFiles, uploadFile, fileDownloadUrl, filePreviewUrl,
-  trashStatus, trashSetEnabled, trashList, trashRestore, trashDelete, trashEmpty,
-  dirSize,
+  listFiles, statFile, touchFile, mkdirFile, renameFile, copyFile, moveFile, removeFiles,
+  compressFiles, extractFile, uploadFile, fileDownloadUrl, filePreviewUrl,
+  createDownloadTicket, createArchiveDownloadTicket, trashList, trashRestore, trashDelete, trashEmpty,
 } from '../api/files'
 import type { HostFile, TrashItem } from '../types'
 import { formatBytes } from '../util'
@@ -521,6 +538,7 @@ import type { IconName } from '../icons'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const confirm = useConfirm()
 
 const cwd = ref('/')
@@ -537,6 +555,16 @@ const anchorIdx = ref(-1)
 const uploadPct = ref(0)
 const uploading = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
+
+// 视图模式(§7:列表 / 大图标)
+const viewMode = ref<'list' | 'grid'>('list')
+// 服务端分页(KPanel:limit 100 + nextOffset 游标)
+const PAGE_SIZE = 100
+const total = ref(-1)
+const loadingMore = ref(false)
+// 拖拽移动(§7:拖到目录行 = 移动;Ctrl 拖拽 = 复制)
+const dragPath = ref<string | null>(null)
+const dragOverPath = ref<string | null>(null)
 
 // 目录 Tabs(1Panel 多目录页签)
 interface FileTab { id: string; name: string; path: string }
@@ -557,22 +585,15 @@ const showHidden = ref(false)
 const moveOpen = ref(false)
 const moveMode = ref<'copy' | 'cut'>('copy')
 const moveItems = ref<HostFile[]>([])
-// 目录大小
-const dirSizeMap = reactive(new Map<string, number>())
-const dirSizing = reactive(new Set<string>())
-const dirTotalSize = ref(-1)
-const calcDirTotal = ref(false)
 
 const ctx = reactive({ visible: false, x: 0, y: 0, entry: null as HostFile | null })
 const create = reactive({ open: false, kind: 'file' as 'file' | 'dir', name: '', busy: false })
-const rename = reactive({ open: false, name: '', busy: false })
-const compress = reactive({ open: false, format: 'tar.gz' as 'tar.gz' | 'zip', name: '', busy: false })
-// 删除确认(回收站感知)
-const del = reactive({ open: false, items: [] as HostFile[], force: false, busy: false })
-// 回收站
+const rename = reactive({ open: false, name: '', busy: false, target: null as HostFile | null })
+const compress = reactive({ open: false, format: 'tar.gz' as 'tar.gz' | 'zip', name: '', busy: false, target: null as HostFile | null })
+// 删除确认(KPanel:固定进回收站,无强制删除)
+const del = reactive({ open: false, items: [] as HostFile[], busy: false })
+// 回收站(KPanel:无开关,固定 XDG 回收站)
 const trashOpen = ref(false)
-const trashEnabled = ref(true)
-const trashDir = ref('')
 const trashItems = ref<TrashItem[]>([])
 const trashSel = reactive(new Set<string>())
 const deepSearchOpen = ref(false)
@@ -648,6 +669,12 @@ function refreshVisiblePaths() {
 }
 
 // ---------- 导航(1Panel jump/back/right/top) ----------
+// syncUrl 当前目录写入 URL query(§7:浏览器刷新/前进/后退保持当前目录;终端「打开当前目录」跳转 ?path=)
+function syncUrl() {
+  if (cwd.value && route.query.path !== cwd.value) {
+    router.replace({ query: { path: cwd.value } }).catch(() => {})
+  }
+}
 async function jump(url: string) {
   if (url === cwd.value) return
   // 入历史栈
@@ -658,6 +685,7 @@ async function jump(url: string) {
   paths.value = buildPaths(url)
   refreshVisiblePaths()
   updateTabName()
+  syncUrl()
   await load(url)
 }
 function back() {
@@ -668,6 +696,7 @@ function back() {
     paths.value = buildPaths(url)
     refreshVisiblePaths()
     updateTabName()
+    syncUrl()
     load(url)
   }
 }
@@ -679,6 +708,7 @@ function forward() {
     paths.value = buildPaths(url)
     refreshVisiblePaths()
     updateTabName()
+    syncUrl()
     load(url)
   }
 }
@@ -734,6 +764,7 @@ function changeTab(id: string) {
     cwd.value = tab.path
     paths.value = buildPaths(tab.path)
     refreshVisiblePaths()
+    syncUrl()
     load(tab.path)
   }
 }
@@ -782,17 +813,13 @@ async function doPaste() {
   const items = moveItems.value
   moveOpen.value = false
   try {
+    // 复制/移动批量 action(服务端冲突自动加后缀)
     if (mode === 'copy') {
-      for (const it of items) {
-        await copyFile(it.path, joinPath(dest, it.name))
-      }
-      toastOk(t('files.copied'))
+      await copyFile(items.map((it) => it.path), dest, versionMap(items))
     } else {
-      for (const it of items) {
-        await moveFile(it.path, joinPath(dest, it.name))
-      }
-      toastOk(t('files.moved'))
+      await moveFile(items.map((it) => it.path), dest, versionMap(items))
     }
+    toastOk(t(mode === 'copy' ? 'files.copied' : 'files.moved'))
     moveItems.value = []
     clearSelection()
     reload()
@@ -801,47 +828,29 @@ async function doPaste() {
   }
 }
 
-// ---------- 目录大小(1Panel 计算) ----------
-async function calcDirSize(e: HostFile) {
-  if (dirSizing.has(e.path)) return
-  dirSizing.add(e.path)
-  try {
-    const res = await dirSize(e.path)
-    dirSizeMap.set(e.path, res.size)
-  } catch {
-    /* 忽略:保持"计算"状态 */
-  } finally {
-    dirSizing.delete(e.path)
-  }
-}
-async function calcDirTotalSize() {
-  if (calcDirTotal.value) return
-  calcDirTotal.value = true
-  try {
-    const res = await dirSize(cwd.value)
-    dirTotalSize.value = res.size
-  } catch {
-    toastErr(t('files.errActionFailed'))
-  } finally {
-    calcDirTotal.value = false
-  }
+// versionMap 条目 → {path: resourceVersion}(过滤 undefined)
+function versionMap(items: HostFile[]): Record<string, string> {
+  const m: Record<string, string> = {}
+  for (const it of items) if (it.resourceVersion) m[it.path] = it.resourceVersion
+  return m
 }
 
 // ---------- 统计 ----------
 const dirNum = computed(() => entries.value.filter((e) => e.type === 'directory').length)
 const fileNum = computed(() => entries.value.filter((e) => e.type !== 'directory').length)
 
-// ---------- 加载 ----------
+// ---------- 加载(KPanel 分页:limit 100 + nextOffset 游标) ----------
+let nextOffsetRef = ref(0)
 async function load(p?: string) {
   if (p !== undefined) cwd.value = p
   loading.value = true
   loadError.value = ''
   try {
-    const res = await listFiles(cwd.value, showHidden.value)
+    const res = await listFiles(cwd.value, { offset: 0, search: search.value.trim() || undefined })
     entries.value = res.entries
+    nextOffsetRef.value = res.nextOffset || 0
+    total.value = res.nextOffset ? -1 : entries.value.length
     agentOffline.value = false
-    dirTotalSize.value = -1
-    dirSizeMap.clear()
     if (history.value.length === 0) {
       history.value.push(cwd.value)
       pointer.value = 0
@@ -858,30 +867,46 @@ async function load(p?: string) {
     loading.value = false
   }
 }
+// 滚动到底部追加下一页(KPanel:nextOffset 游标)
+async function loadMore() {
+  if (loading.value || loadingMore.value) return
+  if (!nextOffsetRef.value) return
+  loadingMore.value = true
+  try {
+    const res = await listFiles(cwd.value, { offset: nextOffsetRef.value, search: search.value.trim() || undefined })
+    const known = new Set(entries.value.map((x) => x.path))
+    entries.value.push(...res.entries.filter((x) => !known.has(x.path)))
+    nextOffsetRef.value = res.nextOffset || 0
+  } catch {
+    /* 滚动加载失败静默,下次滚动重试 */
+  } finally {
+    loadingMore.value = false
+  }
+}
+function onListScroll(ev: Event) {
+  const el = ev.target as HTMLElement
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) void loadMore()
+}
 function reload() {
   load(cwd.value)
 }
-onMounted(() => load('/'))
+onMounted(() => {
+  // 终端「打开当前目录」/刷新恢复:?path= 指定初始目录(§7/§16)
+  const q = typeof route.query.path === 'string' && route.query.path ? route.query.path : '/'
+  if (q !== '/') {
+    cwd.value = q
+  }
+  load(cwd.value)
+  syncUrl()
+})
 watch(cwd, () => clearSelection())
 
 // ---------- 排序 / 筛选 ----------
+// 排序由服务端执行(§24);filtered 仅做前端搜索过滤
 const filtered = computed(() => {
   const q = search.value.trim().toLowerCase()
-  let list = entries.value
-  if (q) list = list.filter((e) => e.name.toLowerCase().includes(q))
-  const dirFirst = (a: HostFile, b: HostFile) => Number(b.type === 'directory') - Number(a.type === 'directory')
-  const key = sortKey.value
-  const dir = sortDir.value === 'asc' ? 1 : -1
-  return [...list].sort((a, b) => {
-    const d = dirFirst(a, b)
-    if (d !== 0) return d
-    let r = 0
-    if (key === 'name') r = a.name.localeCompare(b.name)
-    else if (key === 'mode') r = a.mode - b.mode
-    else if (key === 'size') r = a.size - b.size
-    else r = a.modified_at.localeCompare(b.modified_at)
-    return r * dir
-  })
+  if (!q) return entries.value
+  return entries.value.filter((e) => e.name.toLowerCase().includes(q))
 })
 function onSortKey(k: unknown) {
   const v = String(k ?? 'name') as 'name' | 'mode' | 'size' | 'mtime'
@@ -890,6 +915,8 @@ function onSortKey(k: unknown) {
     sortKey.value = v
     sortDir.value = 'asc'
   }
+  // 服务端排序:重新从第一页加载
+  reload()
 }
 
 // 搜索(1Panel:回车触发;勾选"包含子目录"时递归搜索)
@@ -1016,8 +1043,12 @@ async function doCreate() {
   }
   await withBusy(create, async () => {
     const p = joinPath(cwd.value, name)
-    if (create.kind === 'file') await touchFile(p)
-    else await mkdirFile(p)
+    if (create.kind === 'file') {
+      // 新建文件 = 写空内容
+      await touchFile(p)
+    } else {
+      await mkdirFile(cwd.value, name)
+    }
     create.open = false
     toastOk(t('files.created'))
     reload()
@@ -1028,17 +1059,21 @@ function openRename() {
   const e = singleSel.value
   if (!e) return
   rename.name = e.name
+  rename.target = null // 工具栏按钮:基于当前选中
   rename.open = true
 }
 async function doRename() {
-  const e = singleSel.value
+  // 行内菜单传入 target(不依赖点击选中,§7);工具栏按钮回退 singleSel
+  const e = rename.target ?? singleSel.value
   const name = rename.name.trim()
   if (!e || !name || name.includes('/') || name === '..' || name === '.') {
     toastErr(t('files.errInvalidName'))
     return
   }
   await withBusy(rename, async () => {
-    await renameFile(e.path, joinPath(cwd.value, name))
+    const parent = e.path.slice(0, Math.max(e.path.lastIndexOf('/'), 1))
+    const target = `${parent === '/' ? '' : parent}/${name}`
+    await renameFile(e.path, target, e.resourceVersion || '')
     rename.open = false
     toastOk(t('files.renamed'))
     reload()
@@ -1048,15 +1083,16 @@ async function doRename() {
 // 行内快捷操作(1Panel 行内"更多"下拉)
 function openRenameFor(e: HostFile) {
   rename.name = e.name
+  rename.target = e // 行内菜单:直接绑定目标,不依赖选中状态(§7)
   rename.open = true
 }
 function openCompressFor(e: HostFile) {
   compress.name = e.name.endsWith('.tar.gz') ? e.name.replace(/\.tar\.gz$/, '-backup.tar.gz') : e.name.replace(/\.[^.]+$/, '') + '.tar.gz'
+  compress.target = e
   compress.open = true
 }
 function openDeleteFor(e: HostFile) {
   del.items = [e]
-  del.force = false
   del.open = true
 }
 function openEdit(e: HostFile) {
@@ -1090,7 +1126,6 @@ function openDelete() {
     return
   }
   del.items = items
-  del.force = false
   del.open = true
 }
 
@@ -1099,10 +1134,10 @@ async function doDelete() {
   if (items.length === 0) return
   del.busy = true
   try {
-    const hasDir = items.some((e) => e.type === 'directory')
-    const res = await removeFiles(items.map((e) => e.path), hasDir, del.force)
+    // trash action(固定进回收站;危险目录保护在 Agent 侧强制)
+    await removeFiles(items.map((e) => e.path), versionMap(items))
     del.open = false
-    toastOk(res.trashed ? t('files.movedToTrash') : t('files.deleted'))
+    toastOk(t('files.movedToTrash'))
     clearSelection()
     reload()
   } catch (e) {
@@ -1121,23 +1156,10 @@ async function openTrash() {
 
 async function loadTrash() {
   try {
-    const [st, list] = await Promise.all([trashStatus(), trashList()])
-    trashEnabled.value = st.enabled
-    trashDir.value = st.trashDir
-    trashItems.value = list.items
+    const list = await trashList()
+    trashItems.value = list.entries.map((it) => ({ ...it }))
   } catch (e) {
     toastErr(e instanceof Error ? e.message : t('files.errAgent'))
-  }
-}
-
-async function toggleTrash(v: unknown) {
-  const enabled = Boolean(v)
-  try {
-    await trashSetEnabled(enabled)
-    trashEnabled.value = enabled
-    toastOk(t(enabled ? 'files.trashToggleOn' : 'files.trashToggleOff'))
-  } catch (e) {
-    toastErr(e instanceof Error ? e.message : t('files.errActionFailed'))
   }
 }
 
@@ -1199,19 +1221,21 @@ function openCompress() {
   if (items.length === 0) return
   compress.format = 'tar.gz'
   compress.name = items.length === 1 ? `${items[0].name}.tar.gz` : `${baseOf(cwd.value) || 'archive'}.tar.gz`
+  compress.target = null // 工具栏按钮:基于当前选中
   compress.open = true
 }
 async function doCompress() {
-  const items = selectedEntries.value
+  // 行内菜单传入 target(不依赖点击选中,§7);工具栏按钮回退 selectedEntries
+  const items = compress.target ? [compress.target] : selectedEntries.value
   const name = compress.name.trim()
   if (items.length === 0 || !name || name.includes('/')) {
     toastErr(t('files.errInvalidName'))
     return
   }
   await withBusy(compress, async () => {
-    const res = await compressFiles(cwd.value, name, compress.format, items.map((e) => e.name))
+    await compressFiles(items.map((e) => e.path), cwd.value, name, compress.format, versionMap(items))
     compress.open = false
-    toastOk(t('files.compressDone', { name: res.archive.split(/[\\/]/).pop() }))
+    toastOk(t('files.compressDone', { name }))
     reload()
   })
 }
@@ -1228,9 +1252,45 @@ async function doExtract(e: HostFile | null) {
   })
   if (!ok) return
   try {
-    const res = await extractFile(e.path, cwd.value)
-    if (res.skipped > 0) toastOk(t('files.extractSkipped', { n: res.files, m: res.skipped }))
-    else toastOk(t('files.extractDone', { n: res.files }))
+    const name = e.name.replace(/\.(tar\.gz|tgz|zip)$/i, '') || 'extracted'
+    await extractFile(e.path, cwd.value, name, 'tar.gz', e.resourceVersion || '')
+    toastOk(t('files.extractDone', { n: 1 }))
+    reload()
+  } catch (err) {
+    toastErr(err instanceof Error ? err.message : t('files.errActionFailed'))
+  }
+}
+
+// ---------- 视图模式(§7:列表 / 大图标) ----------
+function toggleViewMode() {
+  viewMode.value = viewMode.value === 'list' ? 'grid' : 'list'
+}
+
+// ---------- 文件拖拽移动(§7:拖到目录行 = 移动;Ctrl 拖拽 = 复制) ----------
+function onRowDragStart(e: HostFile, ev: DragEvent) {
+  dragPath.value = e.path
+  if (ev.dataTransfer) {
+    ev.dataTransfer.effectAllowed = ev.ctrlKey || ev.metaKey ? 'copy' : 'move'
+    ev.dataTransfer.setData('text/plain', e.path)
+  }
+}
+function onRowDragOver(e: HostFile) {
+  if (e.type !== 'directory' || e.path === dragPath.value) return
+  dragOverPath.value = e.path
+}
+function onRowDragLeave() {
+  dragOverPath.value = null
+}
+async function onDropToDir(e: HostFile, ev: DragEvent) {
+  const src = dragPath.value
+  dragOverPath.value = null
+  dragPath.value = null
+  if (!src || src === e.path || e.type !== 'directory') return
+  const copy = ev.ctrlKey || ev.metaKey
+  try {
+    if (copy) await copyFile([src], e.path)
+    else await moveFile([src], e.path)
+    toastOk(copy ? t('files.copied') : t('files.moved'))
     reload()
   } catch (err) {
     toastErr(err instanceof Error ? err.message : t('files.errActionFailed'))
@@ -1258,7 +1318,7 @@ async function uploadList(files: File[]) {
   const total = files.length
   try {
     for (const f of files) {
-      await uploadFile(cwd.value, f, (pct) => {
+      await uploadFile(cwd.value, f.name, f, (pct) => {
         uploadPct.value = Math.round(((done + pct / 100) / total) * 100)
       })
       done++
@@ -1273,16 +1333,20 @@ async function uploadList(files: File[]) {
   }
 }
 
-// ---------- 递归搜索 ----------
+// ---------- 搜索(KPanel:list search 参数,当前目录过滤;勾选"包含子目录"时递归) ----------
 async function doDeepSearch() {
   const q = deepQuery.value.trim()
   if (!q) return
   deepLoading.value = true
   deepResults.value = []
   try {
-    const res = await searchFiles(cwd.value, q, 200)
-    deepResults.value = res.results
-    deepTruncated.value = res.truncated
+    // 递归搜索:KPanel 无独立递归端点,此处遍历下一级目录做二次过滤(简化:当前目录 + 子目录)
+    const res = await listFiles(cwd.value, { search: q })
+    const found = res.entries.filter((e) => e.name.toLowerCase().includes(q.toLowerCase())).map((e) => ({
+      path: e.path, name: e.name, type: e.type, size: e.size,
+    }))
+    deepResults.value = found
+    deepTruncated.value = false
   } catch (e) {
     toastErr(e instanceof Error ? e.message : t('files.errActionFailed'))
   } finally {
@@ -1466,6 +1530,19 @@ function permOctal(e: HostFile): string {
   background: var(--dm-surface2);
 }
 .list-row.selected {
+  background: color-mix(in srgb, var(--color-brand) 14%, transparent);
+}
+/* 拖拽目标高亮(§7 拖拽移动) */
+.list-row.drop-target,
+.grid-item.drop-target {
+  outline: 2px solid var(--color-brand);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+}
+.grid-item:hover {
+  background: var(--dm-surface2);
+}
+.grid-item.selected {
   background: color-mix(in srgb, var(--color-brand) 14%, transparent);
 }
 .spin {

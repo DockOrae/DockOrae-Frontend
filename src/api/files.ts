@@ -1,101 +1,272 @@
 /**
- * 宿主文件管理器 API(面板 → Agent → 宿主)。
+ * 宿主文件管理器 API(2026-09-02 重构:端点契约对齐 KPanel 长轮询架构,命名保留 DockOrae 风格)。
+ * 端点:
+ *   GET  /v1/files                    → 目录列表(path/limit/offset/search,服务端分页)
+ *   GET  /v1/files/entry              → 单条目属性(path)
+ *   POST /v1/files/entries            → 批量属性(paths)
+ *   GET  /v1/files/trash              → 回收站列表
+ *   GET  /v1/files/content            → 读文件/下载(path/disposition)
+ *   PUT  /v1/files/content            → 写文件(path, JSON {content, expectedResourceVersion})
+ *   GET  /v1/files/text               → 文本读取(≤64KiB)
+ *   GET  /v1/files/tail               → 文本尾部(≤64KiB)
+ *   GET  /v1/files/archive            → 压缩下载(selection JSON + name)
+ *   POST /v1/files/upload             → 上传(path/name/overwrite, octet-stream)
+ *   POST /v1/files/actions            → 批量操作(mkdir/rename/copy/move/trash/chmod/compress/extract/trash_*)
+ *   POST /v1/files/download-tickets   → 下载票据(浏览器 <a> 无 header 场景)
  */
-import { api, entrancePath, getToken, wsUrl } from './client'
-import type { HostFile, FileListResponse, FileCompressResult, FileExtractResult, FileSearchResponse, TrashStatus, TrashItem } from '../types'
+import { api, entrancePath, getToken } from './client'
+import type { HostFile, FileListResponse, TrashItem } from '../types'
 
-/** 目录列表(showHidden 控制隐藏文件) */
-export const listFiles = (path: string, showHidden = false) =>
-  api<FileListResponse>(`/files/list?path=${encodeURIComponent(path)}&show_hidden=${showHidden}`)
-
-/** 目录大小 */
-export const dirSize = (path: string) => api<{ size: number }>(`/files/dirsize?path=${encodeURIComponent(path)}`)
-
-/** 修改所有者/用户组 */
-export const chownFile = (path: string, owner: string, group: string) =>
-  api<{ ok: boolean }>('/files/chown', { method: 'POST', json: { path, owner, group } })
-
-/** 单条目属性 */
-export const statFile = (path: string) => api<HostFile>(`/files/stat?path=${encodeURIComponent(path)}`)
-
-/** 新建空文件 */
-export const touchFile = (path: string) => api<{ ok: boolean }>('/files/touch', { method: 'POST', json: { path } })
-
-/** 新建目录 */
-export const mkdirFile = (path: string) => api<{ ok: boolean }>('/files/mkdir', { method: 'POST', json: { path } })
-
-/** 重命名 */
-export const renameFile = (oldPath: string, newPath: string) =>
-  api<{ ok: boolean }>('/files/rename', { method: 'POST', json: { old_path: oldPath, new_path: newPath } })
-
-/** 复制 */
-export const copyFile = (src: string, dst: string) =>
-  api<{ ok: boolean }>('/files/copy', { method: 'POST', json: { src, dst } })
-
-/** 移动 */
-export const moveFile = (src: string, dst: string) =>
-  api<{ ok: boolean }>('/files/move', { method: 'POST', json: { src, dst } })
-
-/** 删除(危险;Agent 强制 confirm + 目录 recursive;force=true 永久删除,否则回收站开启时进回收站) */
-export const removeFiles = (paths: string[], recursive: boolean, force = false) =>
-  api<{ ok: boolean; trashed: boolean }>('/files/remove', { method: 'POST', json: { paths, recursive, force } })
-
-/** 回收站状态 */
-export const trashStatus = () => api<TrashStatus>('/files/trash/status')
-
-/** 回收站开关 */
-export const trashSetEnabled = (enabled: boolean) =>
-  api<{ ok: boolean }>('/files/trash/enable', { method: 'POST', json: { enabled } })
-
-/** 回收站列表 */
-export const trashList = () => api<{ items: TrashItem[] }>('/files/trash/list')
-
-/** 恢复回收站条目 */
-export const trashRestore = (names: string[]) =>
-  api<{ ok: boolean }>('/files/trash/restore', { method: 'POST', json: { names } })
-
-/** 彻底删除回收站条目 */
-export const trashDelete = (names: string[]) =>
-  api<{ ok: boolean }>('/files/trash/delete', { method: 'POST', json: { names } })
-
-/** 清空回收站 */
-export const trashEmpty = () => api<{ ok: boolean }>('/files/trash/empty', { method: 'POST', json: {} })
-
-/** 修改权限(mode 为八进制数,如 0o755) */
-export const chmodFile = (path: string, mode: number) =>
-  api<{ ok: boolean }>('/files/chmod', { method: 'POST', json: { path, mode } })
-
-/** 覆盖写入(编辑器保存) */
-export const writeFile = (path: string, content: string) =>
-  api<{ ok: boolean }>('/files/write', { method: 'POST', json: { path, content } })
-
-/** 压缩(tar.gz/zip) */
-export const compressFiles = (dir: string, archive: string, format: 'tar.gz' | 'zip', names: string[]) =>
-  api<FileCompressResult>('/files/compress', { method: 'POST', json: { dir, archive, format, names } })
-
-/** 解压 */
-export const extractFile = (archive: string, dest: string) =>
-  api<FileExtractResult>('/files/extract', { method: 'POST', json: { archive, dest } })
-
-/** 递归搜索 */
-export const searchFiles = (path: string, q: string, limit = 200) =>
-  api<FileSearchResponse>(`/files/search?path=${encodeURIComponent(path)}&q=${encodeURIComponent(q)}&limit=${limit}`)
-
-/** 下载 URL(带 token query 认证,浏览器原生下载) */
-export function fileDownloadUrl(path: string): string {
-  return entrancePath(`/api/files/download?path=${encodeURIComponent(path)}&token=${encodeURIComponent(getToken() || '')}`)
+// ---------- 条目适配:Agent FileEntry ↔ HostFile ----------
+interface RawFileEntry {
+  name: string
+  path: string
+  kind: string
+  mime?: string
+  sizeBytes: number
+  mode: string
+  owner: string
+  group: string
+  modifiedAt: string
+  resourceVersion: string
+  editable: boolean
+  previewable: boolean
 }
 
-/** 图片预览 URL(带 token query 认证,<img> 直接引用) */
-export const filePreviewUrl = fileDownloadUrl
+interface RawDirectory {
+  path: string
+  entries: RawFileEntry[]
+  offset: number
+  nextOffset?: number
+  total?: number
+  totalKnown?: boolean
+  truncated: boolean
+  scanTruncated?: boolean
+  readAt: string
+}
 
-/** 上传(带进度;multipart → 面板 → Agent 流式) */
-export function uploadFile(dir: string, file: File, onProgress?: (pct: number) => void): Promise<void> {
+/** "-rwxr-xr-x" / "drwxr-xr-x" → 八进制 bits */
+function modeStrToBits(s: string): number {
+  if (!s || s.length < 10) return 0
+  let bits = 0
+  const segs = [s.slice(1, 4), s.slice(4, 7), s.slice(7, 10)]
+  segs.forEach((seg, i) => {
+    const shift = (2 - i) * 3
+    if (seg[0] === 'r') bits |= 4 << shift
+    if (seg[1] === 'w') bits |= 2 << shift
+    if (seg[2] === 'x' || seg[2] === 's' || seg[2] === 't') bits |= 1 << shift
+    if (seg[2] === 's' || seg[2] === 'S') bits |= 0o4000 >> (i * 3)
+    if (seg[2] === 't' || seg[2] === 'T') bits |= 0o1000
+  })
+  return bits
+}
+
+function toHostFile(e: RawFileEntry): HostFile {
+  return {
+    name: e.name,
+    path: e.path,
+    type: (e.kind === 'special' ? 'file' : e.kind) as HostFile['type'],
+    size: e.sizeBytes,
+    modified_at: e.modifiedAt,
+    mode: modeStrToBits(e.mode),
+    permissions: e.mode,
+    owner: e.owner,
+    group: e.group,
+    // 扩展字段(冲突检测等)
+    resourceVersion: e.resourceVersion,
+    editable: e.editable,
+    previewable: e.previewable,
+  }
+}
+
+/** 目录列表(服务端分页 limit 100 + nextOffset 游标;search 当前目录过滤) */
+export const listFiles = async (
+  path: string,
+  options?: { offset?: number; search?: string },
+  signal?: AbortSignal,
+): Promise<{ path: string; entries: HostFile[]; nextOffset?: number; total?: number }> => {
+  const q = [`path=${encodeURIComponent(path)}`, 'limit=100']
+  if (options?.offset) q.push(`offset=${options.offset}`)
+  if (options?.search) q.push(`search=${encodeURIComponent(options.search)}`)
+  const res = await api<RawDirectory>(`/v1/files?${q.join('&')}`, { signal })
+  return {
+    path: res.path,
+    entries: res.entries.map(toHostFile),
+    nextOffset: res.nextOffset,
+    total: res.totalKnown && res.total ? res.total : undefined,
+  }
+}
+
+/** 单条目属性 */
+export const statFile = async (path: string): Promise<HostFile> => {
+  const e = await api<RawFileEntry>(`/v1/files/entry?path=${encodeURIComponent(path)}`)
+  return toHostFile(e)
+}
+
+/** 批量属性 */
+export const statFiles = (paths: string[]) =>
+  api<{ entries: RawFileEntry[]; unavailable: string[] }>('/v1/files/entries', {
+    method: 'POST',
+    json: { paths },
+  })
+
+/** 新建空文件(写入空内容) */
+export const touchFile = (path: string) =>
+  api<{ entry: RawFileEntry }>(`/v1/files/content?path=${encodeURIComponent(path)}`, {
+    method: 'PUT',
+    json: { content: '', expectedResourceVersion: '' },
+  })
+
+/** 新建目录 */
+export const mkdirFile = (path: string, name: string) =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'mkdir', target: path, name },
+  })
+
+/** 重命名 */
+export const renameFile = (oldPath: string, newPath: string, resourceVersion = '') =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'rename', sources: [oldPath], target: newPath, expectedResourceVersion: resourceVersion },
+  })
+
+/** 复制(批量;目标冲突自动加后缀) */
+export const copyFile = (sources: string[], target: string, versions: Record<string, string> = {}) =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'copy', sources, target, expectedResourceVersions: versions },
+  })
+
+/** 移动(批量) */
+export const moveFile = (sources: string[], target: string, versions: Record<string, string> = {}) =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'move', sources, target, expectedResourceVersions: versions },
+  })
+
+/** 删除(移入回收站;危险目录保护在 Agent 侧强制) */
+export const removeFiles = (paths: string[], versions: Record<string, string> = {}) =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'trash', sources: paths, expectedResourceVersions: versions },
+  })
+
+/** 修改权限(mode 为八进制字符串如 "0755") */
+export const chmodFile = (path: string, mode: string) =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'chmod', sources: [path], mode },
+  })
+
+/** 覆盖写入(编辑器保存;expectedResourceVersion 冲突检测) */
+export const writeFile = (path: string, content: string, expectedResourceVersion = '') =>
+  api<{ entry: RawFileEntry }>(`/v1/files/content?path=${encodeURIComponent(path)}`, {
+    method: 'PUT',
+    json: { content, expectedResourceVersion },
+  })
+
+/** 文本读取(≤64KiB,编辑器/预览) */
+export const readFileText = (path: string) =>
+  api<{ path: string; content: string; sizeBytes: number; resourceVersion: string }>(
+    `/v1/files/text?path=${encodeURIComponent(path)}`,
+  )
+
+/** 文本尾部(日志预览) */
+export const tailFileText = (path: string, maxBytes = 32768) =>
+  api<{ path: string; content: string; sizeBytes: number; resourceVersion: string; truncated: boolean }>(
+    `/v1/files/tail?path=${encodeURIComponent(path)}&maxBytes=${maxBytes}`,
+  )
+
+/** 压缩(批量 action) */
+export const compressFiles = (
+  sources: string[],
+  target: string,
+  name: string,
+  format: 'tar.gz' | 'zip',
+  versions: Record<string, string> = {},
+) =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'compress', sources, target, name, format, expectedResourceVersions: versions },
+  })
+
+/** 解压 */
+export const extractFile = (path: string, target: string, name: string, format: string, resourceVersion = '') =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'extract', sources: [path], target, name, format, expectedResourceVersion: resourceVersion },
+  })
+
+/** 内容 URL(下载/内联预览;<img>/<a> 直接引用,带 token) */
+export function fileDownloadUrl(path: string, disposition: 'inline' | 'attachment' = 'attachment'): string {
+  return entrancePath(
+    `/api/v1/files/content?path=${encodeURIComponent(path)}&disposition=${disposition}&token=${encodeURIComponent(getToken() || '')}`,
+  )
+}
+
+/** 图片预览 URL */
+export const filePreviewUrl = (path: string) => fileDownloadUrl(path, 'inline')
+
+/** 创建下载票据(浏览器 <a> 下载,无 header 场景) */
+export const createDownloadTicket = (path: string) =>
+  api<{ downloadUrl: string; expiresAt: string }>('/v1/files/download-tickets', {
+    method: 'POST',
+    json: { path },
+  })
+
+/** 创建压缩下载票据 */
+export const createArchiveDownloadTicket = (
+  entries: { path: string; resourceVersion: string }[],
+  name: string,
+) =>
+  api<{ downloadUrl: string; expiresAt: string }>('/v1/files/archive-download-tickets', {
+    method: 'POST',
+    json: {
+      sources: entries.map((e) => e.path),
+      expectedResourceVersions: Object.fromEntries(entries.map((e) => [e.path, e.resourceVersion])),
+      name,
+    },
+  })
+
+/** 回收站列表(KPanel:固定 XDG 回收站,无开关) */
+export const trashList = () =>
+  api<{ entries: TrashItem[]; total: number; truncated: boolean; readAt: string }>('/v1/files/trash')
+
+/** 回收站:恢复 */
+export const trashRestore = (trashIds: string[]) =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'trash_restore', trashIds },
+  })
+
+/** 回收站:彻底删除 */
+export const trashDelete = (trashIds: string[]) =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'trash_delete', trashIds },
+  })
+
+/** 回收站:清空 */
+export const trashEmpty = () =>
+  api<{ action: string; succeeded: unknown[]; failed: unknown[] }>('/v1/files/actions', {
+    method: 'POST',
+    json: { action: 'trash_empty' },
+  })
+
+/** 上传(octet-stream 直传,带进度) */
+export function uploadFile(
+  path: string,
+  name: string,
+  file: File,
+  onProgress?: (pct: number) => void,
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', entrancePath(`/api/files/upload?dir=${encodeURIComponent(dir)}`))
+    xhr.open('POST', entrancePath(`/api/v1/files/upload?path=${encodeURIComponent(path)}&name=${encodeURIComponent(name)}`))
     const token = getToken()
     if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.setRequestHeader('Content-Type', 'application/octet-stream')
     xhr.upload.onprogress = (e) => {
       if (onProgress && e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
     }
@@ -104,7 +275,8 @@ export function uploadFile(dir: string, file: File, onProgress?: (pct: number) =
       else {
         let msg = 'err.requestFailed'
         try {
-          msg = (JSON.parse(xhr.responseText) as { error?: string }).error || msg
+          const j = JSON.parse(xhr.responseText) as { title?: string; message?: string }
+          msg = j.title || j.message || msg
         } catch {
           /* ignore */
         }
@@ -112,14 +284,6 @@ export function uploadFile(dir: string, file: File, onProgress?: (pct: number) =
       }
     }
     xhr.onerror = () => reject(new Error('err.networkError'))
-    const fd = new FormData()
-    fd.append('file', file)
-    xhr.send(fd)
+    xhr.send(file)
   })
-}
-
-/** 宿主终端 WS 地址 */
-export function hostTerminalWsUrl(cwd: string, cols: number, rows: number): string {
-  const q = [`cwd=${encodeURIComponent(cwd)}`, `cols=${cols}`, `rows=${rows}`].join('&')
-  return wsUrl(`/files/terminal?${q}`)
 }

@@ -1,5 +1,5 @@
 /**
- * 宿主文件管理器类型(与 Agent files.Entry 一一对应,禁止前端自行假设结构)。
+ * 宿主文件管理器类型(2026-09-02 对齐 KPanel 契约:resourceVersion 冲突检测 + XDG 回收站)。
  */
 
 export type FileType = 'file' | 'directory' | 'symlink' | 'socket' | 'device' | 'fifo' | 'unknown'
@@ -16,12 +16,18 @@ export interface HostFile {
   owner: string
   group: string
   target?: string
+  /** 资源版本(冲突检测;KPanel 契约) */
+  resourceVersion?: string
+  editable?: boolean
+  previewable?: boolean
 }
 
 /** 目录列表响应 */
 export interface FileListResponse {
   path: string
   entries: HostFile[]
+  total: number // 分页前总条目数(服务端分页)
+  nextOffset?: number
 }
 
 /** 压缩结果 */
@@ -53,17 +59,17 @@ export interface FileSearchResponse {
   truncated: boolean
 }
 
-/** 回收站状态 */
-export interface TrashStatus {
-  enabled: boolean
-  trashDir: string
-}
-
-/** 回收站条目 */
+/** 回收站条目(KPanel 契约) */
 export interface TrashItem {
+  id: string
   name: string
-  source_path: string
-  size: number
-  delete_time: string
-  is_dir: boolean
+  originalPath?: string
+  kind: string
+  sizeBytes: number
+  mode: string
+  owner: string
+  group: string
+  deletedAt: string
+  resourceVersion: string
+  restorable: boolean
 }

@@ -193,7 +193,7 @@ async function saveMode() {
   if (!props.entry || !modeValid.value) return
   savingMode.value = true
   try {
-    await chmodFile(props.entry.path, parseInt(modeText.value.trim(), 8))
+    await chmodFile(props.entry.path, modeText.value.trim())
     toastOk(t('files.propModeSaved'))
     emit('saved')
     emit('close')

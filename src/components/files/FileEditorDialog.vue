@@ -34,11 +34,20 @@
         <div v-else-if="loading" class="flex-1 flex items-center justify-center text-muted text-sm">
           {{ t('files.loading') }}
         </div>
-        <!-- 编辑器 -->
-        <div v-show="!loading && !loadError" ref="editorEl" class="flex-1 overflow-hidden text-[13px]" />
+        <!-- 编辑器(CodeMirror;大文件自动降级纯文本 textarea,§9/§24) -->
+        <div v-show="!loading && !loadError && !plainMode" ref="editorEl" class="flex-1 overflow-hidden text-[13px]" />
+        <textarea
+          v-if="!loading && !loadError && plainMode"
+          v-model="plainText"
+          class="flex-1 w-full resize-none bg-transparent p-3 font-mono text-[13px] outline-none"
+          spellcheck="false"
+          @keydown.ctrl.s.prevent="save"
+          @keydown.meta.s.prevent="save"
+        />
         <!-- 状态栏 -->
         <div v-if="!loading && !loadError" class="flex items-center gap-4 px-4 h-7 border-t border-line bg-surface2 text-[11px] text-muted shrink-0">
-          <span>{{ t('files.editorFindHint') }}</span>
+          <span v-if="plainMode" class="text-amber-500">{{ t('files.editorPlainMode') }}</span>
+          <span v-else>{{ t('files.editorFindHint') }}</span>
           <span class="ml-auto flex items-center gap-3">
             <span>{{ t('files.colName') }}: {{ fileName }}</span>
             <span v-if="sizeText">{{ t('files.propSize') }}: {{ sizeText }}</span>
@@ -51,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { EditorState, type Extension } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view'
@@ -73,7 +82,7 @@ import { nginx } from '@codemirror/legacy-modes/mode/nginx'
 import { dockerFile } from '@codemirror/legacy-modes/mode/dockerfile'
 import Icon from '../Icon.vue'
 import { Button } from '@/components/ui/button'
-import { fileDownloadUrl, writeFile } from '../../api/files'
+import { fileDownloadUrl, statFile, writeFile } from '../../api/files'
 import { formatBytes } from '../../util'
 import { toastErr, toastOk } from '../../toast'
 import { useConfirm } from '../../confirm'
@@ -90,13 +99,24 @@ const editorEl = ref<HTMLElement | null>(null)
 const loading = ref(false)
 const loadError = ref('')
 const content = ref('')
+const plainText = ref('')
+const plainMode = ref(false)
 const dirty = ref(false)
 const wrap = ref(false)
 const fullscreen = ref(false)
 const sizeText = ref('')
+// 版本快照(保存冲突检测:resourceVersion)
+const version = reactive({ resourceVersion: '' })
 let view: EditorView | null = null
 
-const MAX_EDIT = 2 * 1024 * 1024
+// CodeMirror 编辑上限;超过自动降级纯文本(§9);超过绝对上限拒绝
+const CM_EDIT_LIMIT = 2 * 1024 * 1024
+const PLAIN_EDIT_LIMIT = 20 * 1024 * 1024
+
+// 纯文本模式输入追踪
+watch(plainText, (v) => {
+  if (v !== content.value) dirty.value = true
+})
 
 function langFor(name: string): Extension | null {
   const e = name.split('.').pop()?.toLowerCase() ?? ''
@@ -157,13 +177,16 @@ async function load() {
   loadError.value = ''
   dirty.value = false
   content.value = ''
+  plainText.value = ''
+  plainMode.value = false
   sizeText.value = ''
+  version.resourceVersion = ''
   try {
-    const resp = await fetch(fileDownloadUrl(props.path), { cache: 'no-store' })
+    const resp = await fetch(fileDownloadUrl(props.path, 'inline'), { cache: 'no-store' })
     if (!resp.ok) throw new Error(String(resp.status))
     const buf = await resp.arrayBuffer()
     sizeText.value = formatBytes(buf.byteLength)
-    if (buf.byteLength > MAX_EDIT) {
+    if (buf.byteLength > PLAIN_EDIT_LIMIT) {
       loadError.value = t('files.editorTooLarge')
       return
     }
@@ -173,12 +196,22 @@ async function load() {
       return
     }
     content.value = new TextDecoder().decode(bytes)
+    // §9:大文件自动降级纯文本(无语法高亮/行号,仍可编辑保存)
+    plainMode.value = buf.byteLength > CM_EDIT_LIMIT
+    if (plainMode.value) plainText.value = content.value
+    // 记录资源版本,保存前比对(resourceVersion 冲突检测)
+    try {
+      const st = await statFile(props.path)
+      version.resourceVersion = st.resourceVersion || ''
+    } catch {
+      /* stat 失败(瞬时)不阻塞编辑;版本为空则跳过冲突检测 */
+    }
   } catch {
     loadError.value = t('files.editorLoadFailed')
   } finally {
     loading.value = false
     await nextTick()
-    mountEditor()
+    if (!plainMode.value) mountEditor()
   }
 }
 
@@ -224,10 +257,30 @@ function mountEditor() {
 }
 
 async function save() {
-  if (!view || loading.value) return
+  if (loading.value) return
+  // 冲突检测:读取资源版本,变化则提示,禁止静默覆盖其他进程的修改
+  if (version.resourceVersion) {
+    try {
+      const st = await statFile(props.path)
+      if ((st.resourceVersion || '') !== version.resourceVersion) {
+        const ok = await confirm(t('files.editorConflict'), { title: t('files.editorConflictTitle'), danger: true })
+        if (!ok) return
+      }
+    } catch {
+      /* stat 失败不阻塞保存 */
+    }
+  }
+  const newContent = plainMode.value ? plainText.value : view?.state.doc.toString() ?? ''
   try {
-    await writeFile(props.path, view.state.doc.toString())
+    await writeFile(props.path, newContent, version.resourceVersion || '')
     dirty.value = false
+    // 保存成功后刷新版本快照
+    try {
+      const st = await statFile(props.path)
+      version.resourceVersion = st.resourceVersion || ''
+    } catch {
+      /* ignore */
+    }
     toastOk(t('files.editorSaved'))
     emit('saved')
   } catch (e) {
@@ -261,6 +314,6 @@ watch(
 )
 
 watch([wrap, () => document.documentElement.dataset.theme], () => {
-  if (props.open && !loading.value && !loadError.value) mountEditor()
+  if (props.open && !loading.value && !loadError.value && !plainMode.value) mountEditor()
 })
 </script>
