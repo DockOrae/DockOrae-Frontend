@@ -38,7 +38,7 @@
     <DetailOverview v-if="tab === 'overview' && inspect" :data="inspect" />
     <DetailLogs v-else-if="tab === 'logs'" :id="id" />
     <DetailStats v-else-if="tab === 'stats'" :id="id" />
-    <DetailTerminal v-else-if="tab === 'terminal'" :id="id" />
+    <DetailTerminal v-else-if="tab === 'terminal'" :id="id" :running="status === 'running'" />
   </div>
 </template>
 

@@ -19,3 +19,23 @@ export type ContainerAction = 'start' | 'stop' | 'restart' | 'kill' | 'pause' | 
 
 export const containerAction = (id: string, action: ContainerAction) =>
   api<OkResponse>(`/containers/${id}/${action}`, { method: 'POST' })
+
+/** 容器单次命令执行结果(后端 agent.ContainerExecResult 契约) */
+export interface ContainerExecResult {
+  stdout: string
+  stderr: string
+  exit_code: number
+  duration_ms: number
+  truncated: boolean
+}
+
+/**
+ * 容器内执行单条命令(输入命令 → 执行 → stdout/stderr/exit code)。
+ * 命令退出码非 0 不抛错(200 + exit_code 字段);超时/容器未运行/Agent 离线会抛 ApiError。
+ * timeoutSeconds:1~300(0 = 后端默认 30s)。
+ */
+export const execContainer = (id: string, command: string, timeoutSeconds = 0) =>
+  api<ContainerExecResult>(`/containers/${id}/exec`, {
+    method: 'POST',
+    json: { command, timeout_seconds: timeoutSeconds },
+  })

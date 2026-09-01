@@ -274,7 +274,7 @@ const navs: NavItem[] = [
   { to: '/images', labelKey: 'nav.images', icon: 'image' },
   { to: '/networks', labelKey: 'nav.networks', icon: 'network' },
   { to: '/volumes', labelKey: 'nav.volumes', icon: 'volume' },
-  { to: '/compose', labelKey: 'nav.compose', icon: 'compose' },
+  // Compose 已并入容器页(2026-09-02:容器页按 compose 标签分组,不再独立一级导航)
   // 宿主机管理(§55/§56):终端 / 文件,位于「面板设置」紧上方
   { to: '/terminal', labelKey: 'nav.terminal', icon: 'terminal' },
   { to: '/files', labelKey: 'nav.files', icon: 'folder' },

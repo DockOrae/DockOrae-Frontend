@@ -20,7 +20,7 @@ export interface ComposeInspect {
   yaml?: string | null
 }
 
-/** 前端推导的栈运行状态(ComposeDetailView status computed) */
+/** 前端推导的栈运行状态(ComposeManageDialog status computed) */
 export type ComposeStackStatus = 'running' | 'stopped' | 'partial'
 
 /** 部署/更新请求体 */

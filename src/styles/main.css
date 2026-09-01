@@ -13,24 +13,22 @@
    - 中英文同一字号下视觉高度一致,不按语言分别设字号;
      字号由组件语义决定(Tailwind text-* / --fs-* Token)
    ===================================================================== */
-/* 英文字体(BlueCustard 艺术字):WOFF2 优先,OTF 兜底。
+/* 英文字体(BlueCustard 艺术字):WOFF2(Vite 打包后带 hash,走 immutable 缓存)。
    size-adjust: 82% —— 光学缩小英文/数字(用户两轮反馈英文偏大),
    大写高 0.78em×0.82≈0.64em,与 YuanQI 汉字视觉高度匹配 */
 @font-face {
   font-family: "BlueCustard";
-  src: url("/fonts/BlueCustard.woff2") format("woff2"),
-    url("/fonts/BlueCustard.otf") format("opentype");
+  src: url("../assets/fonts/BlueCustard.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
   size-adjust: 82%;
 }
 
-/* 中文字体(元气,YuanQI):WOFF2 优先,OTF 兜底 */
+/* 中文字体(元气,YuanQI):WOFF2(Vite 打包后带 hash,走 immutable 缓存) */
 @font-face {
   font-family: "YuanQI";
-  src: url("/fonts/YuanQI.woff2") format("woff2"),
-    url("/fonts/YuanQI.otf") format("opentype");
+  src: url("../assets/fonts/YuanQI.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
