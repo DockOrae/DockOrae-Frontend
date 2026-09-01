@@ -209,7 +209,12 @@ const manageProject = ref('')
 const execOpen = ref(false)
 const execId = ref('')
 const execName = ref('')
-const execRunning = ref(false)
+// 与容器列表实时绑定:外部 docker stop 经事件流刷新列表后,弹窗内自动禁用(§11/测试6)
+const execRunning = computed(() => {
+  if (!execId.value) return false
+  const c = containers.value.find((x) => x.Id === execId.value)
+  return c ? c.State === 'running' : false
+})
 
 // 面板托管的 compose 项目(分组头显示「编辑」/组操作)
 const managedProjects = ref<Set<string>>(new Set())
@@ -424,7 +429,6 @@ async function remove(c: ContainerListItem) {
 function openExec(c: ContainerListItem) {
   execId.value = c.Id
   execName.value = name(c)
-  execRunning.value = c.State === 'running'
   execOpen.value = true
 }
 
