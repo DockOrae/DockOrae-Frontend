@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-// 文件管理器内嵌宿主终端弹窗(长轮询,KPanel 架构;自动进入对应目录,不跳转侧边栏终端页)
+// 文件管理器内嵌宿主终端弹窗(长轮询;自动进入对应目录,不跳转侧边栏终端页)
 import { onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Terminal } from '@xterm/xterm'

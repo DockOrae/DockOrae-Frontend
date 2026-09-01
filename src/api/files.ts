@@ -1,5 +1,5 @@
 /**
- * 宿主文件管理器 API(2026-09-02 重构:端点契约对齐 KPanel 长轮询架构,命名保留 DockOrae 风格)。
+ * 宿主文件管理器 API(2026-09-02 重构:端点契约长轮询架构)。
  * 端点:
  *   GET  /v1/files                    → 目录列表(path/limit/offset/search,服务端分页)
  *   GET  /v1/files/entry              → 单条目属性(path)
@@ -229,7 +229,7 @@ export const createArchiveDownloadTicket = (
     },
   })
 
-/** 回收站列表(KPanel:固定 XDG 回收站,无开关) */
+/** 回收站列表(固定 XDG 回收站,无开关) */
 export const trashList = () =>
   api<{ entries: TrashItem[]; total: number; truncated: boolean; readAt: string }>('/v1/files/trash')
 

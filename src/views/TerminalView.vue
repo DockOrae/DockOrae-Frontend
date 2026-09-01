@@ -223,7 +223,7 @@ function closeTab(id: string) {
   }
 }
 
-// ---------- 终端连接(KPanel 长轮询) ----------
+// ---------- 终端连接(长轮询) ----------
 function mountTerm(tab: TermTab) {
   let el = elMap.get(tab.id)
   // 兜底:函数 ref 在 v-for+自闭合元素上的注册偶发滞后,直接查 DOM
@@ -253,7 +253,7 @@ function mountTerm(tab: TermTab) {
   termMap.set(tab.id, term)
   fitMap.set(tab.id, fit)
   term.onData((d) => {
-    // 输入队列(合并小包,防抖 flush;与 KPanel HostTerminal 一致)
+    // 输入队列(合并小包,防抖 flush)
     if (tab.manualClose || !tab.sessionId) return
     const buf = (inputBuf.get(tab.id) || '') + d
     inputBuf.set(tab.id, buf)
@@ -271,7 +271,7 @@ function mountTerm(tab: TermTab) {
   connectTab(tab)
 }
 
-/** 编码 base64(无 padding,KPanel 同款) */
+/** 编码 base64(无 padding) */
 function encodeB64(value: string): string {
   const bytes = new TextEncoder().encode(value)
   let binary = ''
@@ -361,11 +361,11 @@ function startPoll(tab: TermTab) {
         tab.manualClose = true
         return
       }
-      void loop() // 立即下一轮(KPanel 同款:wait=1000ms 长轮询)
+      void loop() // 立即下一轮(wait=1000ms 长轮询)
     } catch (e: unknown) {
       if (controller.signal.aborted || tab.manualClose) return
       if ((e as { name?: string })?.name === 'AbortError') return
-      // 重连退避(500ms → 5s 封顶,KPanel 同款)
+      // 重连退避(500ms → 5s 封顶)
       tab.connected = false
       tab.reconnecting = true
       tab.attempt++

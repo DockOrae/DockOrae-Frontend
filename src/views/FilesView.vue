@@ -331,7 +331,7 @@
             </div>
           </div>
 
-      <!-- 底部统计(目录/文件数量;当前目录大小 KPanel 无 dirsize 端点,显示 —) -->
+      <!-- 底部统计(目录/文件数量;当前目录大小显示 —) -->
       <div class="flex items-center gap-3 text-[12px] text-muted mt-2 shrink-0">
         <span>{{ t('files.dirFileNum', { dir: dirNum, file: fileNum }) }}</span>
       </div>
@@ -389,7 +389,7 @@
       </div>
     </Modal>
 
-    <!-- 删除确认(KPanel:固定移入回收站) -->
+    <!-- 删除确认(固定移入回收站) -->
     <Modal :model-value="del.open" :title="t('files.deleteTitle')" @close="del.open = false" @update:model-value="(v) => (del.open = v)">
       <div class="space-y-3">
         <div class="rounded-lg border border-line bg-surface2 px-3 py-2.5 text-[13px] flex items-start gap-2">
@@ -411,7 +411,7 @@
       </div>
     </Modal>
 
-    <!-- 回收站(KPanel:固定 XDG 回收站,无开关) -->
+    <!-- 回收站(固定 XDG 回收站,无开关) -->
     <Modal :model-value="trashOpen" :title="t('files.recycleBin')" size="2xl" @close="trashOpen = false" @update:model-value="(v) => (trashOpen = v)">
       <div class="space-y-3">
         <div class="flex items-center gap-2 flex-wrap">
@@ -558,7 +558,7 @@ const fileInput = ref<HTMLInputElement | null>(null)
 
 // 视图模式(§7:列表 / 大图标)
 const viewMode = ref<'list' | 'grid'>('list')
-// 服务端分页(KPanel:limit 100 + nextOffset 游标)
+// 服务端分页(limit 100 + nextOffset 游标)
 const PAGE_SIZE = 100
 const total = ref(-1)
 const loadingMore = ref(false)
@@ -590,9 +590,9 @@ const ctx = reactive({ visible: false, x: 0, y: 0, entry: null as HostFile | nul
 const create = reactive({ open: false, kind: 'file' as 'file' | 'dir', name: '', busy: false })
 const rename = reactive({ open: false, name: '', busy: false, target: null as HostFile | null })
 const compress = reactive({ open: false, format: 'tar.gz' as 'tar.gz' | 'zip', name: '', busy: false, target: null as HostFile | null })
-// 删除确认(KPanel:固定进回收站,无强制删除)
+// 删除确认(固定进回收站)
 const del = reactive({ open: false, items: [] as HostFile[], busy: false })
-// 回收站(KPanel:无开关,固定 XDG 回收站)
+// 回收站(固定 XDG 回收站,无开关)
 const trashOpen = ref(false)
 const trashItems = ref<TrashItem[]>([])
 const trashSel = reactive(new Set<string>())
@@ -839,7 +839,7 @@ function versionMap(items: HostFile[]): Record<string, string> {
 const dirNum = computed(() => entries.value.filter((e) => e.type === 'directory').length)
 const fileNum = computed(() => entries.value.filter((e) => e.type !== 'directory').length)
 
-// ---------- 加载(KPanel 分页:limit 100 + nextOffset 游标) ----------
+// ---------- 加载(分页:limit 100 + nextOffset 游标) ----------
 let nextOffsetRef = ref(0)
 async function load(p?: string) {
   if (p !== undefined) cwd.value = p
@@ -867,7 +867,7 @@ async function load(p?: string) {
     loading.value = false
   }
 }
-// 滚动到底部追加下一页(KPanel:nextOffset 游标)
+// 滚动到底部追加下一页(nextOffset 游标)
 async function loadMore() {
   if (loading.value || loadingMore.value) return
   if (!nextOffsetRef.value) return
@@ -1333,14 +1333,14 @@ async function uploadList(files: File[]) {
   }
 }
 
-// ---------- 搜索(KPanel:list search 参数,当前目录过滤;勾选"包含子目录"时递归) ----------
+// ---------- 搜索(list search 参数,当前目录过滤;勾选"包含子目录"时递归) ----------
 async function doDeepSearch() {
   const q = deepQuery.value.trim()
   if (!q) return
   deepLoading.value = true
   deepResults.value = []
   try {
-    // 递归搜索:KPanel 无独立递归端点,此处遍历下一级目录做二次过滤(简化:当前目录 + 子目录)
+    // 递归搜索:无独立递归端点,此处遍历下一级目录做二次过滤(简化:当前目录 + 子目录)
     const res = await listFiles(cwd.value, { search: q })
     const found = res.entries.filter((e) => e.name.toLowerCase().includes(q.toLowerCase())).map((e) => ({
       path: e.path, name: e.name, type: e.type, size: e.size,

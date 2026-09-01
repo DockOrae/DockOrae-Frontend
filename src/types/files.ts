@@ -1,5 +1,5 @@
 /**
- * 宿主文件管理器类型(2026-09-02 对齐 KPanel 契约:resourceVersion 冲突检测 + XDG 回收站)。
+ * 宿主文件管理器类型(2026-09-02 对齐长轮询契约:resourceVersion 冲突检测 + XDG 回收站)。
  */
 
 export type FileType = 'file' | 'directory' | 'symlink' | 'socket' | 'device' | 'fifo' | 'unknown'
@@ -16,7 +16,7 @@ export interface HostFile {
   owner: string
   group: string
   target?: string
-  /** 资源版本(冲突检测;KPanel 契约) */
+  /** 资源版本(冲突检测) */
   resourceVersion?: string
   editable?: boolean
   previewable?: boolean
@@ -59,7 +59,7 @@ export interface FileSearchResponse {
   truncated: boolean
 }
 
-/** 回收站条目(KPanel 契约) */
+/** 回收站条目 */
 export interface TrashItem {
   id: string
   name: string
