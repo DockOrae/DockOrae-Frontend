@@ -23,12 +23,6 @@ export interface HostFile {
 }
 
 /** 目录列表响应 */
-export interface FileListResponse {
-  path: string
-  entries: HostFile[]
-  total: number // 分页前总条目数(服务端分页)
-  nextOffset?: number
-}
 
 /** 压缩结果 */
 export interface FileCompressResult {

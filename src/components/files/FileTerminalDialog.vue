@@ -189,6 +189,7 @@ watch(
       window.removeEventListener('resize', onResize)
     }
   },
+  { immediate: true },
 )
 
 watch(fontSize, (n) => {

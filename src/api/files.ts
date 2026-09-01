@@ -12,10 +12,9 @@
  *   GET  /v1/files/archive            → 压缩下载(selection JSON + name)
  *   POST /v1/files/upload             → 上传(path/name/overwrite, octet-stream)
  *   POST /v1/files/actions            → 批量操作(mkdir/rename/copy/move/trash/chmod/compress/extract/trash_*)
- *   POST /v1/files/download-tickets   → 下载票据(浏览器 <a> 无 header 场景)
  */
 import { api, entrancePath, getToken } from './client'
-import type { HostFile, FileListResponse, TrashItem } from '../types'
+import type { HostFile, TrashItem } from '../types'
 
 // ---------- 条目适配:Agent FileEntry ↔ HostFile ----------
 interface RawFileEntry {
@@ -207,27 +206,6 @@ export function fileDownloadUrl(path: string, disposition: 'inline' | 'attachmen
 
 /** 图片预览 URL */
 export const filePreviewUrl = (path: string) => fileDownloadUrl(path, 'inline')
-
-/** 创建下载票据(浏览器 <a> 下载,无 header 场景) */
-export const createDownloadTicket = (path: string) =>
-  api<{ downloadUrl: string; expiresAt: string }>('/v1/files/download-tickets', {
-    method: 'POST',
-    json: { path },
-  })
-
-/** 创建压缩下载票据 */
-export const createArchiveDownloadTicket = (
-  entries: { path: string; resourceVersion: string }[],
-  name: string,
-) =>
-  api<{ downloadUrl: string; expiresAt: string }>('/v1/files/archive-download-tickets', {
-    method: 'POST',
-    json: {
-      sources: entries.map((e) => e.path),
-      expectedResourceVersions: Object.fromEntries(entries.map((e) => [e.path, e.resourceVersion])),
-      name,
-    },
-  })
 
 /** 回收站列表(固定 XDG 回收站,无开关) */
 export const trashList = () =>

@@ -169,7 +169,6 @@ export default {
     serverUnreachable: '無法連線授權伺服器，請檢查 URL 與網路',
     serverError: '授權伺服器回傳異常',
     changed: '授權已變更',
-    demoUnavailable: '演示 Key 不可用',
     deviceBound: '此裝置已綁定其他授權',
     fileRequired: '請選擇授權檔案',
     json: '授權資料無效',

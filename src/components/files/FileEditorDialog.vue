@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { EditorState, type Extension } from '@codemirror/state'
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view'
@@ -311,9 +311,15 @@ watch(
       view = null
     }
   },
+  { immediate: true },
 )
 
 watch([wrap, () => document.documentElement.dataset.theme], () => {
   if (props.open && !loading.value && !loadError.value && !plainMode.value) mountEditor()
+})
+
+onBeforeUnmount(() => {
+  view?.destroy()
+  view = null
 })
 </script>

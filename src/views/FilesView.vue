@@ -499,26 +499,25 @@
     </Modal>
 
     <!-- 编辑器 / 属性 -->
-    <FileEditorDialog :open="editorPath !== null" :path="editorPath || ''" @close="editorPath = null" @saved="reload" />
+    <component v-if="editorDialogComp" :is="editorDialogComp" :open="editorPath !== null" :path="editorPath || ''" @close="editorPath = null" @saved="reload" />
     <FilePropsDialog :open="propsTarget !== null" :entry="propsTarget" @close="propsTarget = null" @saved="reload" />
 
     <!-- 在此打开终端(二级弹框,不跳转侧边栏终端页) -->
-    <FileTerminalDialog :open="terminalHere.open" :cwd="terminalHere.cwd" @close="terminalHere.open = false" />
+    <component v-if="terminalDialogComp" :is="terminalDialogComp" :open="terminalHere.open" :cwd="terminalHere.cwd" @close="terminalHere.open = false" />
 
     <input ref="fileInput" type="file" multiple class="hidden" @change="onFilesSelected" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import type { Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import Icon from '../components/Icon.vue'
 import Modal from '../components/Modal.vue'
 import FileContextMenu, { type CtxMenuItem } from '../components/files/FileContextMenu.vue'
-import FileEditorDialog from '../components/files/FileEditorDialog.vue'
 import FilePropsDialog from '../components/files/FilePropsDialog.vue'
-import FileTerminalDialog from '../components/files/FileTerminalDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -526,9 +525,9 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
-  listFiles, statFile, touchFile, mkdirFile, renameFile, copyFile, moveFile, removeFiles,
+  listFiles, touchFile, mkdirFile, renameFile, copyFile, moveFile, removeFiles,
   compressFiles, extractFile, uploadFile, fileDownloadUrl, filePreviewUrl,
-  createDownloadTicket, createArchiveDownloadTicket, trashList, trashRestore, trashDelete, trashEmpty,
+  trashList, trashRestore, trashDelete, trashEmpty,
 } from '../api/files'
 import type { HostFile, TrashItem } from '../types'
 import { formatBytes } from '../util'
@@ -559,7 +558,6 @@ const fileInput = ref<HTMLInputElement | null>(null)
 // 视图模式(§7:列表 / 大图标)
 const viewMode = ref<'list' | 'grid'>('list')
 // 服务端分页(limit 100 + nextOffset 游标)
-const PAGE_SIZE = 100
 const total = ref(-1)
 const loadingMore = ref(false)
 // 拖拽移动(§7:拖到目录行 = 移动;Ctrl 拖拽 = 复制)
@@ -607,6 +605,33 @@ const previewPath = ref<string | null>(null)
 const previewName = computed(() => previewPath.value?.split(/[\\/]/).filter(Boolean).pop() || '')
 // 在此打开终端(弹窗,不跳转侧边栏终端页)
 const terminalHere = reactive({ open: false, cwd: '/root' })
+
+// ---------- 重型对话框按需加载(进入文件页不加载 CodeMirror/xterm;首次打开时才拉取对应 chunk) ----------
+const editorDialogComp = shallowRef<Component>()
+const terminalDialogComp = shallowRef<Component>()
+
+async function loadEditorDialog() {
+  if (editorDialogComp.value) return
+  try {
+    const m = await import('../components/files/FileEditorDialog.vue')
+    editorDialogComp.value = m.default
+  } catch { /* 加载失败保持不可用,下次点击重试 */ }
+}
+
+async function loadTerminalDialog() {
+  if (terminalDialogComp.value) return
+  try {
+    const m = await import('../components/files/FileTerminalDialog.vue')
+    terminalDialogComp.value = m.default
+  } catch { /* noop */ }
+}
+
+watch(editorPath, (v) => {
+  if (v !== null) void loadEditorDialog()
+})
+watch(() => terminalHere.open, (v) => {
+  if (v) void loadTerminalDialog()
+})
 
 const IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'])
 const ARCHIVE_EXT = new Set(['tar.gz', 'tgz', 'tar', 'zip', '7z', 'rar', 'xz', 'gz', 'bz2'])

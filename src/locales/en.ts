@@ -169,7 +169,6 @@ export default {
     serverUnreachable: 'Cannot reach the license server. Check the URL and network',
     serverError: 'License server returned an unexpected response',
     changed: 'License changed',
-    demoUnavailable: 'Demo key unavailable',
     deviceBound: 'This device is bound to another license',
     fileRequired: 'License file required',
     json: 'Invalid license data',

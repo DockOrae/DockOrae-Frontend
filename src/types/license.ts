@@ -54,8 +54,3 @@ export interface LicenseVerifyResponse {
   state?: string
   error?: string
 }
-
-/** 演示 Key 响应(/license/demo) */
-export interface LicenseDemoResponse {
-  key?: string
-}

@@ -170,7 +170,6 @@ export default {
     serverUnreachable: '无法连接授权服务器,请检查 URL 与网络',
     serverError: '授权服务器返回异常',
     changed: 'License 已变更',
-    demoUnavailable: '演示 Key 不可用',
     deviceBound: '本设备已绑定其他 License',
     fileRequired: '请选择授权文件',
     json: '授权数据无效',

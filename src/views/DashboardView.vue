@@ -378,8 +378,16 @@ const host = ref<HostInfo | null>(null)
 const dockerOk = ref(false)
 const dockerVersion = computed(() => (host.value?.docker_version ? 'v' + host.value.docker_version : '?'))
 
-// ---------- 监控 ----------
-const mon = ref<MonitorSnapshot>({ cpu_pct: 0, mem: null, load: null, swap: null, disk: null, panel: null, publicIP: null, net: null, io: null })
+// ---------- 监控(拆分为独立 ref:各卡仅订阅自身数据,避免单对象替换引发全量 computed 重算) ----------
+const cpuPct = ref(0)
+const mem = ref<MonitorSnapshot['mem']>(null)
+const load = ref<MonitorSnapshot['load']>(null)
+const swap = ref<MonitorSnapshot['swap']>(null)
+const disk = ref<MonitorSnapshot['disk']>(null)
+const panel = ref<MonitorSnapshot['panel']>(null)
+const publicIP = ref<MonitorSnapshot['publicIP']>(null)
+const net = ref<MonitorSnapshot['net']>(null)
+const io = ref<MonitorSnapshot['io']>(null)
 const netHistory = ref<{ rx: number[]; tx: number[] }>({ rx: [], tx: [] }) // 速率序列(B/s)
 const ioHistory = ref<{ read: number[]; write: number[] }>({ read: [], write: [] }) // 速率序列(B/s)
 const hist = ref<{ cpu: number[]; mem: number[]; swap: number[]; disk: number[]; containerCount: number[]; imageCount: number[]; volumeCount: number[] }>({ cpu: [], mem: [], swap: [], disk: [], containerCount: [], imageCount: [], volumeCount: [] })
@@ -440,29 +448,29 @@ const counts = computed<{ total: number; running: number; images: number; volume
 }))
 
 // ---------- 计算值 ----------
-const swapPct = computed(() => mon.value.swap?.pct ?? 0)
+const swapPct = computed(() => swap.value?.pct ?? 0)
 const swapSub = computed(() => {
-  const s = mon.value.swap
+  const s = swap.value
   return s ? `${fmtBytes(s.used)} / ${fmtBytes(s.total)}` : '-'
 })
 /** swap 大数字:启用显示总量(如 512MB),未启用显示 0(让设置生效直观可见) */
 const swapBigText = computed(() => {
-  const s = mon.value.swap
+  const s = swap.value
   if (!s || !s.total) return '0'
   return fmtBytes(s.total)
 })
-const memPct = computed(() => mon.value.mem?.pct ?? 0)
+const memPct = computed(() => mem.value?.pct ?? 0)
 const memSub = computed(() => {
-  const m = mon.value.mem
+  const m = mem.value
   return m ? `${fmtBytes(m.used)} / ${fmtBytes(m.total)}` : '-'
 })
-const diskPct = computed(() => mon.value.disk?.pct ?? 0)
+const diskPct = computed(() => disk.value?.pct ?? 0)
 const diskSub = computed(() => {
-  const d = mon.value.disk
+  const d = disk.value
   return d ? `${fmtBytes(d.used)} / ${fmtBytes(d.total)}` : '-'
 })
 const freeDisk = computed(() => {
-  const d = mon.value.disk
+  const d = disk.value
   return d ? fmtBytes(Math.max(0, d.total - d.used)) : '-'
 })
 const cpuSub = computed(() => {
@@ -480,10 +488,10 @@ const uptimeText = computed(() => {
   return `${m}${t('time.minShort')}`
 })
 const imageSizeText = computed(() => fmtBytes(imagesSize.value))
-const panelMem = computed(() => (mon.value.panel ? fmtBytes(mon.value.panel.mem) : '-'))
-const panelThreads = computed(() => (mon.value.panel ? String(mon.value.panel.threads) : '-'))
-const sentTotal = computed(() => fmtBytes(mon.value.net?.tx_total ?? 0))
-const recvTotal = computed(() => fmtBytes(mon.value.net?.rx_total ?? 0))
+const panelMem = computed(() => (panel.value ? fmtBytes(panel.value.mem) : '-'))
+const panelThreads = computed(() => (panel.value ? String(panel.value.threads) : '-'))
+const sentTotal = computed(() => fmtBytes(net.value?.tx_total ?? 0))
+const recvTotal = computed(() => fmtBytes(net.value?.rx_total ?? 0))
 const avgTx = computed(() => fmtRate(avg(netHistory.value.tx)))
 const avgRx = computed(() => fmtRate(avg(netHistory.value.rx)))
 const netPeakText = computed(() => fmtRate(peak(netHistory.value.tx) > peak(netHistory.value.rx) ? peak(netHistory.value.tx) : peak(netHistory.value.rx)))
@@ -509,7 +517,7 @@ interface VitalsItem {
 
 const vitals = computed<VitalsItem[]>(() => [
   {
-    icon: 'cpu', label: t('dashboard.cpuUsage'), percent: mon.value.cpu_pct, color: '#ec4899',
+    icon: 'cpu', label: t('dashboard.cpuUsage'), percent: cpuPct.value, color: '#ec4899',
     detail: cpuSub.value, data: hist.value.cpu,
     footLeft: `${t('dashboard.avg')} ${avg(hist.value.cpu).toFixed(0)}%`,
     footRight: `${t('dashboard.peak')} ${peak(hist.value.cpu).toFixed(0)}%`,
@@ -554,7 +562,7 @@ const ioRefLines = computed(() => [
 // ---------- 健康检查(仿 3x-ui:≥90 红 / ≥75 黄) ----------
 const health = computed(() => {
   const items = [
-    { name: t('dashboard.cpuUsage'), value: mon.value.cpu_pct },
+    { name: t('dashboard.cpuUsage'), value: cpuPct.value },
     { name: t('dashboard.memUsage'), value: memPct.value },
     { name: t('dashboard.diskUsage'), value: diskPct.value },
   ]
@@ -627,7 +635,15 @@ async function loadMonitor() {
     pushHistory(ioHistory.value.read, rd)
     pushHistory(ioHistory.value.write, wr)
 
-    mon.value = m
+    cpuPct.value = m.cpu_pct
+    mem.value = m.mem ?? null
+    load.value = m.load ?? null
+    swap.value = m.swap ?? null
+    disk.value = m.disk ?? null
+    panel.value = m.panel ?? null
+    publicIP.value = m.publicIP ?? null
+    net.value = m.net ?? null
+    io.value = m.io ?? null
     pushHistory(hist.value.cpu, m.cpu_pct)
     pushHistory(hist.value.mem, m.mem?.pct ?? 0)
     pushHistory(hist.value.swap, m.swap?.pct ?? 0)
@@ -647,8 +663,8 @@ function pushLabel(arr: string[]) {
 
 // ---------- 公网 IP(仿 3x-ui status.publicIP:随 monitor 轮询携带,默认隐藏,眼睛切换) ----------
 const showIp = ref(false)
-const ipv4 = computed(() => mon.value.publicIP?.ipv4 || '')
-const ipv6 = computed(() => mon.value.publicIP?.ipv6 || '')
+const ipv4 = computed(() => publicIP.value?.ipv4 || '')
+const ipv6 = computed(() => publicIP.value?.ipv6 || '')
 
 function refreshAll() {
   loadBase()
@@ -828,7 +844,7 @@ const historyChart = computed<HistoryChartConfig>(() => {
     default:
       return {
         title: t('dashboard.cpuUsage'),
-        current: `${(mon.value.cpu_pct ?? 0).toFixed(1)}%`,
+        current: `${(cpuPct.value ?? 0).toFixed(1)}%`,
         s1: hist.value.cpu, s2: [], color1: '#ec4899', color2: '',
         fmt: (v: number) => v.toFixed(1) + '%', valueMax: 100,
         refLines: meanRef(hist.value.cpu, '#ec4899'),

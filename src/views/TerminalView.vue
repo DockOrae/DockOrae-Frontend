@@ -5,20 +5,20 @@
       <!-- 终端 Tabs -->
       <div class="flex items-center gap-1 rounded-md border border-line px-1 py-0.5 overflow-x-auto max-w-[46%]">
         <button
-          v-for="t in tabs"
-          :key="t.id"
+          v-for="tab in tabs"
+          :key="tab.id"
           class="term-tab shrink-0"
-          :class="t.id === activeId ? 'term-tab-active' : ''"
-          :title="t.cwd"
-          @click="switchTab(t.id)"
-          @mousedown.middle.prevent="closeTab(t.id)"
+          :class="tab.id === activeId ? 'term-tab-active' : ''"
+          :title="tab.cwd"
+          @click="switchTab(tab.id)"
+          @mousedown.middle.prevent="closeTab(tab.id)"
         >
-          <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="t.connected ? 'bg-emerald-500' : t.offline ? 'bg-danger' : 'bg-muted'" />
-          <span class="max-w-[120px] truncate">{{ t.title }}</span>
+          <span class="w-1.5 h-1.5 rounded-full shrink-0" :class="tab.connected ? 'bg-emerald-500' : tab.offline ? 'bg-danger' : 'bg-muted'" />
+          <span class="max-w-[120px] truncate">{{ tab.title }}</span>
           <span
             v-if="tabs.length > 1"
             class="w-3.5 h-3.5 rounded hover:bg-danger/20 hover:text-danger text-[12px] leading-none flex items-center justify-center shrink-0"
-            @click.stop="closeTab(t.id)"
+            @click.stop="closeTab(tab.id)"
           >×</span>
         </button>
         <button class="term-tab shrink-0 text-muted hover:text-brand" :title="t('terminal.newTab')" @click="newTab()">+</button>
@@ -70,10 +70,10 @@
 
     <!-- 每个 Tab 一个终端容器(切换时 fit) -->
     <div
-      v-for="t in tabs"
-      :key="t.id"
-      :ref="(el) => registerEl(t.id, el)"
-      v-show="!t.offline && t.id === activeId"
+      v-for="tab in tabs"
+      :key="tab.id"
+      :ref="(el) => registerEl(tab.id, el)"
+      v-show="!tab.offline && tab.id === activeId"
       class="flex-1 min-h-[420px] bg-[#0a0d13] border border-line rounded-xl overflow-hidden p-2"
     />
 
@@ -458,7 +458,7 @@ async function pasteText() {
 
 function clearScreen() {
   const tab = tabs.value.find((t) => t.id === activeId.value)
-  tab && termMap.get(tab.id)?.clear()
+  if (tab) termMap.get(tab.id)?.clear()
 }
 
 watch(fontSize, (n) => {

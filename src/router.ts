@@ -11,8 +11,10 @@ declare module 'vue-router' {
 
 const routes: RouteRecordRaw[] = [
   { path: '/login', name: 'login', component: () => import('./views/LoginView.vue'), meta: { public: true } },
-  // 字体验收页(开发用,不在导航中,可直接访问 /typography)
-  { path: '/typography', name: 'typography', component: () => import('./views/TypographyView.vue'), meta: { public: true } },
+  // 字体验收页(仅开发模式,不在导航中,可直接访问 /typography;生产构建不注册)
+  ...(import.meta.env.DEV
+    ? [{ path: '/typography', name: 'typography', component: () => import('./views/TypographyView.vue'), meta: { public: true } }]
+    : []),
   {
     path: '/',
     component: () => import('./layouts/MainLayout.vue'),
